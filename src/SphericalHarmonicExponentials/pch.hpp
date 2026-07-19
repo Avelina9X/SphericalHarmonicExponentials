@@ -12,6 +12,8 @@
 #include <DirectXMath.h>
 #include "DirectXTex.h"
 
+#define USE_PIX
+#include <pix3.h>
 
 #include <wrl.h>
 #include <string>

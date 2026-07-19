@@ -30,6 +30,11 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mOutputWidth = std::max( inWidth, 1 );
 	mOutputHeight = std::max( inHeight, 1 );
 
+	mEnvironmentParser = std::make_unique<EnvironmentParser>();
+	mEnvironmentParser->ParseEnvironments();
+
+	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
+
 	CreateDevice();
 	CreateDeviceResources();
 	CreateSizedResources();
@@ -59,18 +64,22 @@ void Application::OnDestroy()
 
 	for ( UINT i = 0; i < kBackBufferCount; ++i ) {
 		mCommandAllocators[i].Reset();
+		mComputeCommandAllocators[i].Reset();
 		mRenderTargets[i].Reset();
 	}
 	mMSAARenderTarget.Reset();
 
 	mDepthStencil.Reset();
 	mFence.Reset();
+	mComputeFence.Reset();
 	mCommandList.Reset();
+	mComputeCommandList.Reset();
 	mSwapChain.Reset();
 	mRtvHeap.Reset();
 	mDsvHeap.Reset();
 	mSrvHeap.Reset();
 	mCommandQueue.Reset();
+	mComputeCommandQueue.Reset();
 
 	mDevice.Reset();
 	mFactory.Reset();
@@ -81,7 +90,11 @@ void Application::OnDestroy()
 
 void Application::Tick()
 {
+	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
+
 	Prepare();
+
+	mComputeCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
@@ -89,9 +102,21 @@ void Application::Tick()
 	ImGui::NewFrame();
 	ImGui::ShowMetricsWindow();
 
+	ImGui::Begin( "HDRIs", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+	{
+		float width = ImGui::GetContentRegionAvail().x;
+
+		ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
+		ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
+
+		ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { 256, 256 } );
+	}
+	ImGui::End();
+
+	Execute();
+
 	Clear();
 
-	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
 	Resolve();
@@ -121,6 +146,11 @@ void Application::CreateDeviceResources()
 		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		ThrowIfFailed( mDevice->CreateCommandQueue( &queueDesc, IID_PPV_ARGS( mCommandQueue.ReleaseAndGetAddressOf() ) ) );
+		mCommandQueue->SetName( L"Graphics Queue" );
+
+		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+		ThrowIfFailed( mDevice->CreateCommandQueue( &queueDesc, IID_PPV_ARGS( mComputeCommandQueue.ReleaseAndGetAddressOf() ) ) );
+		mComputeCommandQueue->SetName( L"Compute Queue" );
 	}
 
 	// Create RTV and DSV heaps
@@ -150,10 +180,12 @@ void Application::CreateDeviceResources()
 	// Create an allocator for each backbuffer in the swap chain
 	for ( UINT i = 0; i < kBackBufferCount; ++i ) {
 		ThrowIfFailed( mDevice->CreateCommandAllocator( D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS( mCommandAllocators[i].ReleaseAndGetAddressOf() ) ) );
+		ThrowIfFailed( mDevice->CreateCommandAllocator( D3D12_COMMAND_LIST_TYPE_COMPUTE, IID_PPV_ARGS( mComputeCommandAllocators[i].ReleaseAndGetAddressOf() ) ) );
 	}
 
 	// Create a command list for recording graphics commands and keep it open
 	ThrowIfFailed( mDevice->CreateCommandList( 0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocators[0].Get(), nullptr, IID_PPV_ARGS( mCommandList.ReleaseAndGetAddressOf() ) ) );
+	mCommandList->SetName( L"Graphics Command List" );
 
 	// Create a fence for tracking GPU execution progress
 	ThrowIfFailed( mDevice->CreateFence( mFenceValues[mBackBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS( mFence.ReleaseAndGetAddressOf() ) ) );
@@ -164,14 +196,33 @@ void Application::CreateDeviceResources()
 		throw std::system_error( std::error_code( static_cast<int>( GetLastError() ), std::system_category() ), "CreateEventEx" );
 	}
 
+	// Create a command list for recording compute commands and keep it open
+	ThrowIfFailed( mDevice->CreateCommandList( 0, D3D12_COMMAND_LIST_TYPE_COMPUTE, mComputeCommandAllocators[0].Get(), nullptr, IID_PPV_ARGS( mComputeCommandList.ReleaseAndGetAddressOf() ) ) );
+	mComputeCommandList->SetName( L"Compute Command List" );
+
+	// Create a fence for tracking GPU execution progress
+	ThrowIfFailed( mDevice->CreateFence( mComputeFenceValues[mBackBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS( mComputeFence.ReleaseAndGetAddressOf() ) ) );
+	mComputeFenceValues[mBackBufferIndex]++;
+
+	mComputeFenceEvent.Attach( CreateEventEx( nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE ) );
+	if ( !mComputeFenceEvent.IsValid() ) {
+		throw std::system_error( std::error_code( static_cast<int>( GetLastError() ), std::system_category() ), "CreateEventEx" );
+	}
+
 	// Check SM6.6 support (for bindless textures!)
-	D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_6 };
+	D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_10 };
 	if ( FAILED( mDevice->CheckFeatureSupport( D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof( shaderModel ) ) )
-		|| ( shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6 ) ) {
-		throw std::runtime_error( "Shader Model 6.6 is not supported!" );
+		|| ( shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_0 ) ) {
+		throw std::runtime_error( "Shader Model 6.0 is not supported!" );
 	}
 	else {
 		OutputDebugStringA( std::format( "Shader Model {:x} supported!\n", static_cast<uint32_t>( shaderModel.HighestShaderModel ) ).c_str() );
+	}
+
+	D3D12_FEATURE_DATA_ROOT_SIGNATURE rootFeatureData = {};
+	rootFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+	if ( FAILED( mDevice->CheckFeatureSupport( D3D12_FEATURE_ROOT_SIGNATURE, &rootFeatureData, sizeof( rootFeatureData ) ) ) ) {
+		rootFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
 
 	// ImGui Init
@@ -212,10 +263,24 @@ void Application::CreateDeviceResources()
 		ImGui_ImplDX12_Init( &init_info );
 	}
 
-	// Close command list and execute
+	// Create all compute resources
+	{
+		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
+	}
+
+	// Build BRDF
+	mComputeCommandList->SetDescriptorHeaps( 1, mSrvHeap.GetAddressOf() );
+	mIntegratedBRDF->Execute( mComputeCommandList.Get() );
+
+	// Close compute command list and execute
+	ThrowIfFailed( mComputeCommandList->Close() );
+	ID3D12CommandList* computeCommandLists[] = { mComputeCommandList.Get() };
+	mComputeCommandQueue->ExecuteCommandLists( 1, computeCommandLists );
+
+	// Close graphics command list and execute
 	ThrowIfFailed( mCommandList->Close() );
-	ID3D12CommandList* ppCommandLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists( 1, ppCommandLists );
+	ID3D12CommandList* graphicsCommandLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists( 1, graphicsCommandLists );
 
 	// Wait for GPU to complete execution before going out of scope
 	WaitForGPU();
@@ -231,6 +296,8 @@ void Application::CreateSizedResources()
 	{
 		mRenderTargets[i].Reset();
 		mFenceValues[i] = mFenceValues[mBackBufferIndex];
+
+		mComputeFenceValues[i] = mComputeFenceValues[mBackBufferIndex];
 	}
 
 	// If the swap chain doesn't exist create it
@@ -390,6 +457,9 @@ void Application::Prepare()
 	ThrowIfFailed( mCommandAllocators[mBackBufferIndex]->Reset() );
 	ThrowIfFailed( mCommandList->Reset( mCommandAllocators[mBackBufferIndex].Get(), nullptr ) );
 
+	ThrowIfFailed( mComputeCommandAllocators[mBackBufferIndex]->Reset() );
+	ThrowIfFailed( mComputeCommandList->Reset( mComputeCommandAllocators[mBackBufferIndex].Get(), nullptr ) );
+
 	// Transition the render target into the correct state to allow for drawing into it.
 	const D3D12_RESOURCE_BARRIER barriers[] =  {
 		CD3DX12_RESOURCE_BARRIER::Transition(
@@ -406,8 +476,35 @@ void Application::Prepare()
 	mCommandList->ResourceBarrier( 2, barriers );
 }
 
+void Application::Execute()
+{
+	PIXBeginEvent( mComputeCommandQueue.Get(), PIX_COLOR_DEFAULT, L"Execute" );
+
+	ThrowIfFailed( mComputeCommandList->Close() );
+	mComputeCommandQueue->ExecuteCommandLists( 1, CommandListCast( mComputeCommandList.GetAddressOf() ) );
+
+	// Schedule a Signal command in the queue.
+	const UINT64 currentFenceValue = mComputeFenceValues[mBackBufferIndex];
+	ThrowIfFailed( mComputeCommandQueue->Signal( mComputeFence.Get(), currentFenceValue ) );
+
+	// If the next frame is not ready to be rendered yet, wait until it is ready.
+	if ( mComputeFence->GetCompletedValue() < mComputeFenceValues[mBackBufferIndex] ) {
+		ThrowIfFailed( mComputeFence->SetEventOnCompletion( mComputeFenceValues[mBackBufferIndex], mComputeFenceEvent.Get() ) );
+		std::ignore = WaitForSingleObjectEx( mComputeFenceEvent.Get(), INFINITE, FALSE );
+	}
+
+	// Set the fence value for the next frame.
+	mComputeFenceValues[( mBackBufferIndex + 1 ) % kBackBufferCount] = currentFenceValue + 1;
+
+	mCommandQueue->Wait( mComputeFence.Get(), currentFenceValue );
+
+	PIXEndEvent( mComputeCommandQueue.Get() );
+}
+
 void Application::Clear()
 {
+	PIXBeginEvent( mCommandList.Get(), PIX_COLOR_DEFAULT, L"Clear" );
+
 	// Clear the RTV and DSV
 	{
 		const auto cpuHandleRTV = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -428,10 +525,14 @@ void Application::Clear()
 		mCommandList->RSSetViewports( 1, &viewport );
 		mCommandList->RSSetScissorRects( 1, &scissorRect );
 	}
+
+	PIXEndEvent( mCommandList.Get() );
 }
 
 void Application::Resolve()
 {
+	PIXBeginEvent( mCommandList.Get(), PIX_COLOR_DEFAULT, L"Resolve" );
+
 	// Transition the MSAA RTV into resolve state
 	{
 		const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -468,10 +569,14 @@ void Application::Resolve()
 		mCommandList->RSSetViewports( 1, &viewport );
 		mCommandList->RSSetScissorRects( 1, &scissorRect );
 	}
+
+	PIXEndEvent( mCommandList.Get() );
 }
 
 void Application::Present()
 {
+	PIXBeginEvent( mCommandQueue.Get(), PIX_COLOR_DEFAULT, L"Present" );
+
 	// Transition the backbuffer RTV into the present state
 	{
 		const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -498,6 +603,8 @@ void Application::Present()
 		ThrowIfFailed( hr );
 		MoveToNextFrame();
 	}
+
+	PIXEndEvent( mCommandQueue.Get() );
 }
 
 #pragma endregion
@@ -510,13 +617,25 @@ void Application::WaitForGPU() noexcept
 	if ( mCommandQueue && mFence && mFenceEvent.IsValid() ) {
 		// Schedule a Signal command in the GPU queue.
 		UINT64 fenceValue = mFenceValues[mBackBufferIndex];
-		if ( SUCCEEDED( mCommandQueue->Signal( mFence.Get(), fenceValue ) ) ) {
+		UINT64 computeFenceValue = mComputeFenceValues[mBackBufferIndex];
+
+		ThrowIfFailed( mCommandQueue->Signal( mFence.Get(), fenceValue ) );
+		ThrowIfFailed( mComputeCommandQueue->Signal( mComputeFence.Get(), computeFenceValue ) );
+
+		if ( true ) {
 			// Wait until the Signal has been processed.
-			if ( SUCCEEDED( mFence->SetEventOnCompletion( fenceValue, mFenceEvent.Get() ) ) ) {
-				std::ignore = WaitForSingleObjectEx( mFenceEvent.Get(), INFINITE, FALSE );
+			ThrowIfFailed( mFence->SetEventOnCompletion( fenceValue, mFenceEvent.Get() ) );
+			ThrowIfFailed( mComputeFence->SetEventOnCompletion( computeFenceValue, mComputeFenceEvent.Get() ) );
+
+			if ( true ) {
+				//std::ignore = WaitForSingleObjectEx( mFenceEvent.Get(), INFINITE, FALSE );
+
+				HANDLE events[2] = { mFenceEvent.Get(), mComputeFenceEvent.Get() };
+				std::ignore = WaitForMultipleObjectsEx( 2, events, TRUE, INFINITE, FALSE );
 
 				// Increment the fence value for the current frame.
 				mFenceValues[mBackBufferIndex]++;
+				mComputeFenceValues[mBackBufferIndex]++;
 			}
 		}
 	}
@@ -526,6 +645,7 @@ void Application::MoveToNextFrame()
 {
 	// Schedule a Signal command in the queue.
 	const UINT64 currentFenceValue = mFenceValues[mBackBufferIndex];
+
 	ThrowIfFailed( mCommandQueue->Signal( mFence.Get(), currentFenceValue ) );
 
 	// Update the back buffer index.

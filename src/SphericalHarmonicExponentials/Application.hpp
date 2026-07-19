@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Utils/HeapAllocator.hpp"
+#include "Utils/EnvironmentParser.hpp"
+
+#include "Compute/IntegrateBRDF.hpp"
 
 class Application
 {
@@ -26,6 +29,7 @@ public:
 
 protected:
 	void Prepare();
+	void Execute();
 	void Clear();
 	void Resolve();
 	void Present();
@@ -62,10 +66,19 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
 	Microsoft::WRL::Wrappers::Event mFenceEvent;
 
-	// Command pipeline
+	UINT64 mComputeFenceValues[kBackBufferCount] = {};
+	Microsoft::WRL::ComPtr<ID3D12Fence> mComputeFence;
+	Microsoft::WRL::Wrappers::Event mComputeFenceEvent;
+
+	// Graphics pipeline
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mCommandAllocators[kBackBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+
+	// Compute pipeline
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mComputeCommandQueue;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mComputeCommandAllocators[kBackBufferCount];
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mComputeCommandList;
 
 	// Heaps
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
@@ -82,4 +95,8 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mMSAARenderTarget;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencil;
 
+	// App data
+	std::unique_ptr<EnvironmentParser> mEnvironmentParser;
+
+	std::unique_ptr<IntegrateBRDF> mIntegratedBRDF;
 };
