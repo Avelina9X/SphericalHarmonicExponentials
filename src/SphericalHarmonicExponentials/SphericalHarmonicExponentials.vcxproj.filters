@@ -16,6 +16,9 @@
     <Filter Include="Shaders\Compute">
       <UniqueIdentifier>{71381ef6-4d70-496d-8055-82f53bc163ca}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{fc0fd3e6-0817-4db3-a2aa-f4d6cbf00ea2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -51,6 +54,9 @@
     <ClCompile Include="Compute\IntegrateBRDF.cpp">
       <Filter>Compute</Filter>
     </ClCompile>
+    <ClCompile Include="Resources\EnvironmentResources.cpp">
+      <Filter>Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -66,6 +72,9 @@
     </ClInclude>
     <ClInclude Include="Compute\IntegrateBRDF.hpp">
       <Filter>Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\EnvironmentResources.hpp">
+      <Filter>Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

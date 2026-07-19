@@ -3,6 +3,8 @@
 #include "Utils/HeapAllocator.hpp"
 #include "Utils/EnvironmentParser.hpp"
 
+#include "Resources/EnvironmentResources.hpp"
+
 #include "Compute/IntegrateBRDF.hpp"
 
 class Application
@@ -99,4 +101,6 @@ protected:
 	std::unique_ptr<EnvironmentParser> mEnvironmentParser;
 
 	std::unique_ptr<IntegrateBRDF> mIntegratedBRDF;
+
+	std::map<std::string, EnvironemntResources> mEnvironmentResources;
 };

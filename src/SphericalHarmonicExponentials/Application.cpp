@@ -33,6 +33,10 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mEnvironmentParser = std::make_unique<EnvironmentParser>();
 	mEnvironmentParser->ParseEnvironments();
 
+	for ( const auto &[name, path] : mEnvironmentParser->mEnvironments ) {
+		mEnvironmentResources.emplace( name, path );
+	}
+
 	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
 
 	CreateDevice();
@@ -62,6 +66,10 @@ void Application::OnDestroy()
 
 	mSrvHeapAllocator.Destroy();
 
+	for ( auto &[name, resources] : mEnvironmentResources ) {
+		resources.Destroy();
+	}
+
 	for ( UINT i = 0; i < kBackBufferCount; ++i ) {
 		mCommandAllocators[i].Reset();
 		mComputeCommandAllocators[i].Reset();
@@ -90,8 +98,11 @@ void Application::OnDestroy()
 
 void Application::Tick()
 {
-	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 
+	const UINT64 completedGraphicsFenceValue = mFence->GetCompletedValue();
+	const UINT64 currentGraphicsFenceValue = mFenceValues[mBackBufferIndex];
+
+	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	Prepare();
 
 	mComputeCommandList->SetDescriptorHeaps( 1, ppHeaps );
@@ -110,6 +121,13 @@ void Application::Tick()
 		ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
 
 		ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { 256, 256 } );
+
+		for ( const auto &[name, resources] : mEnvironmentResources ) {
+			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
+				assert( resources.mEquirectangularLoaded );
+				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { 256, 128 } );
+			}
+		}
 	}
 	ImGui::End();
 
@@ -263,6 +281,13 @@ void Application::CreateDeviceResources()
 		ImGui_ImplDX12_Init( &init_info );
 	}
 
+	// Load all environments
+	{
+		for ( auto &[name, resources] : mEnvironmentResources ) {
+			resources.LoadTexture( mDevice.Get(), mCommandList.Get(), mSrvHeapAllocator, mFenceValues[mBackBufferIndex] );
+		}
+	}
+
 	// Create all compute resources
 	{
 		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
@@ -284,6 +309,14 @@ void Application::CreateDeviceResources()
 
 	// Wait for GPU to complete execution before going out of scope
 	WaitForGPU();
+
+	// Cleanup upload heaps
+	{
+		const UINT64 completedFence = mFence->GetCompletedValue();
+		for ( auto &[name, resources] : mEnvironmentResources ) {
+			resources.Cleanup( completedFence );
+		}
+	}
 }
 
 void Application::CreateSizedResources()

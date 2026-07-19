@@ -177,6 +177,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Resources\EnvironmentResources.cpp" />
     <ClCompile Include="Utils\EnvironmentParser.cpp" />
     <ClCompile Include="Utils\HeapAllocator.cpp" />
   </ItemGroup>
@@ -184,6 +185,7 @@
     <ClInclude Include="Application.hpp" />
     <ClInclude Include="Compute\IntegrateBRDF.hpp" />
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="Resources\EnvironmentResources.hpp" />
     <ClInclude Include="Utils\EnvironmentParser.hpp" />
     <ClInclude Include="Utils\HeapAllocator.hpp" />
     <ClInclude Include="Utils\ReadData.hpp" />
