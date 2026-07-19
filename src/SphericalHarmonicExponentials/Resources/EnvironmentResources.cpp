@@ -2,7 +2,7 @@
 
 #include "EnvironmentResources.hpp"
 
-void EnvironemntResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
+void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
 {
 	assert( !mEquirectangularLoaded );
 
@@ -130,14 +130,14 @@ void EnvironemntResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 	}
 }
 
-void EnvironemntResources::Cleanup( UINT64 inCompletedGraphicsFenceValue )
+void EnvironmentResources::Cleanup( UINT64 inCompletedGraphicsFenceValue )
 {
 	if ( mEquirectangularLoaded && inCompletedGraphicsFenceValue >= mEquirectangularFenceValue ) {
 		mUploadHeap.Reset();
 	}
 }
 
-void EnvironemntResources::Destroy()
+void EnvironmentResources::Destroy()
 {
 	mEquirectangularLoaded = false;
 	mEnvironmentDataLoaded = false;

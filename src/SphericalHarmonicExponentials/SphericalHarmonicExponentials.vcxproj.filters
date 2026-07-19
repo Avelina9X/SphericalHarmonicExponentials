@@ -19,6 +19,9 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{fc0fd3e6-0817-4db3-a2aa-f4d6cbf00ea2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Compute\Cubemap">
+      <UniqueIdentifier>{28956443-aced-4f04-92f4-1dcf405d5f84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -57,6 +60,9 @@
     <ClCompile Include="Resources\EnvironmentResources.cpp">
       <Filter>Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Compute\CubemapConverter.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -76,6 +82,9 @@
     <ClInclude Include="Resources\EnvironmentResources.hpp">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Compute\CubemapConverter.hpp">
+      <Filter>Compute</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -83,6 +92,12 @@
   <ItemGroup>
     <FxCompile Include="Shaders\Compute\IntegrateBRDF_CS.hlsl">
       <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\Cubemap\CubemapConvertCS.hlsl">
+      <Filter>Shaders\Compute\Cubemap</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\Cubemap\CubemapMipCS.hlsl">
+      <Filter>Shaders\Compute\Cubemap</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

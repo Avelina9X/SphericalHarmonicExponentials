@@ -3,10 +3,10 @@
 #include "Utils/HeapAllocator.hpp"
 #include <filesystem>
 
-class EnvironemntResources
+class EnvironmentResources
 {
 public:
-	EnvironemntResources( std::filesystem::path inPath ) : mPath( inPath ) {};
+	EnvironmentResources( std::filesystem::path inPath ) : mPath( inPath ) {};
 
 	void LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
 	void Cleanup( UINT64 inCompletedGraphicsFenceValue );

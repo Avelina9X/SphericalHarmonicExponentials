@@ -6,6 +6,7 @@
 #include "Resources/EnvironmentResources.hpp"
 
 #include "Compute/IntegrateBRDF.hpp"
+#include "Compute/CubemapConverter.hpp"
 
 class Application
 {
@@ -101,6 +102,7 @@ protected:
 	std::unique_ptr<EnvironmentParser> mEnvironmentParser;
 
 	std::unique_ptr<IntegrateBRDF> mIntegratedBRDF;
+	std::unique_ptr<CubemapConverter> mCubemapConverter;
 
-	std::map<std::string, EnvironemntResources> mEnvironmentResources;
+	std::map<std::string, EnvironmentResources> mEnvironmentResources;
 };

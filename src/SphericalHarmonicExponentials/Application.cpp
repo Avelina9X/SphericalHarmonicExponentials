@@ -38,6 +38,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	}
 
 	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
+	mCubemapConverter = std::make_unique<CubemapConverter>();
 
 	CreateDevice();
 	CreateDeviceResources();
@@ -122,10 +123,43 @@ void Application::Tick()
 
 		ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { 256, 256 } );
 
-		for ( const auto &[name, resources] : mEnvironmentResources ) {
+		for ( auto &[name, resources] : mEnvironmentResources ) {
 			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
 				assert( resources.mEquirectangularLoaded );
 				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { 256, 128 } );
+
+				if ( !resources.mEnvironmentDataLoaded ) {
+					if ( ImGui::Button( "Compute" ) ) {
+						mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
+					}
+				}
+
+				if ( resources.mEnvironmentDataLoaded ) {
+					ImVec2 origin = ImGui::GetCursorPos();
+
+					float imRes = 64;
+					ImVec2 imSize = { imRes, imRes };
+
+					const auto &hdrSkyboxCubemap = resources.mUnfilteredCubemapFaceHandleGPU;
+
+					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 0 } );
+					ImGui::Image( hdrSkyboxCubemap[2].ptr, imSize );
+
+					ImGui::SetCursorPos( { origin.x + imRes * 0, origin.y + imRes * 1 } );
+					ImGui::Image( hdrSkyboxCubemap[1].ptr, imSize );
+
+					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 1 } );
+					ImGui::Image( hdrSkyboxCubemap[4].ptr, imSize );
+
+					ImGui::SetCursorPos( { origin.x + imRes * 2, origin.y + imRes * 1 } );
+					ImGui::Image( hdrSkyboxCubemap[0].ptr, imSize );
+
+					ImGui::SetCursorPos( { origin.x + imRes * 3, origin.y + imRes * 1 } );
+					ImGui::Image( hdrSkyboxCubemap[5].ptr, imSize );
+
+					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 2 } );
+					ImGui::Image( hdrSkyboxCubemap[3].ptr, imSize );
+				}
 			}
 		}
 	}
@@ -291,6 +325,7 @@ void Application::CreateDeviceResources()
 	// Create all compute resources
 	{
 		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
+		mCubemapConverter->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 	}
 
 	// Build BRDF
