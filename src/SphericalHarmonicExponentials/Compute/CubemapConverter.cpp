@@ -92,6 +92,12 @@ void CubemapConverter::Execute( ID3D12GraphicsCommandList *inCommandList, Enviro
 {
 	const UINT cubemapResolution = inResources.mCubemapResolution;
 
+	// If previously created, transition back to UAV
+	if ( inResources.mEnvironmentDataLoaded ) {
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		inCommandList->ResourceBarrier( 1, &barrier );
+	}
+
 	// Execute equirect-to-cubemap compute shader
 	{
 		inCommandList->SetPipelineState( mEquirectPipelineState.Get() );

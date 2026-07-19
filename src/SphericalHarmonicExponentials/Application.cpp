@@ -128,7 +128,7 @@ void Application::Tick()
 				assert( resources.mEquirectangularLoaded );
 				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { 256, 128 } );
 
-				if ( !resources.mEnvironmentDataLoaded ) {
+				if ( !resources.mEnvironmentDataLoaded || true ) {
 					if ( ImGui::Button( "Compute" ) ) {
 						mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
 					}
@@ -136,6 +136,7 @@ void Application::Tick()
 
 				if ( resources.mEnvironmentDataLoaded ) {
 					ImVec2 origin = ImGui::GetCursorPos();
+					ImDrawList *drawList = ImGui::GetWindowDrawList();
 
 					float imRes = 64;
 					ImVec2 imSize = { imRes, imRes };
@@ -261,7 +262,7 @@ void Application::CreateDeviceResources()
 		throw std::system_error( std::error_code( static_cast<int>( GetLastError() ), std::system_category() ), "CreateEventEx" );
 	}
 
-	// Check SM6.6 support (for bindless textures!)
+	// Check SM6.0 support
 	D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_10 };
 	if ( FAILED( mDevice->CheckFeatureSupport( D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof( shaderModel ) ) )
 		|| ( shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_0 ) ) {
