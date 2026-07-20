@@ -167,6 +167,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			inAllocator.Allocate( &mDiffuseCubemapFaceHandleCPU[i], &mDiffuseCubemapFaceHandleGPU[i] );
 			inDevice->CreateShaderResourceView( mDiffuseCubemap.Get(), &faceDesc, mDiffuseCubemapFaceHandleCPU[i] );
 		}
+
+		mDiffuseCubemap->SetName( L"Diffuse Cubemap" );
 	}
 
 	// Create specular cubemap resources
@@ -207,6 +209,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			inAllocator.Allocate( &mSpecularCubemapFaceHandleCPU[i], &mSpecularCubemapFaceHandleGPU[i] );
 			inDevice->CreateShaderResourceView( mSpecularCubemap.Get(), &faceDesc, mSpecularCubemapFaceHandleCPU[i] );
 		}
+
+		mSpecularCubemap->SetName( L"Specular Cubemap" );
 	}
 }
 

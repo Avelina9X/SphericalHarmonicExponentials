@@ -57,7 +57,7 @@ void SpecularPrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, En
 {
 	// If previously created, transition back to UAV
 	if ( inResources.mEnvironmentDataLoaded ) {
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularCubemap.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
 		inCommandList->ResourceBarrier( 1, &barrier );
 	}
 
@@ -85,6 +85,6 @@ void SpecularPrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, En
 		resolution[1] /= 2;
 	}
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
 	inCommandList->ResourceBarrier( 1, &barrier );
 }

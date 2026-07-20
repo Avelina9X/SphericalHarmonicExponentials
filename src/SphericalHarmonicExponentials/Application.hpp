@@ -110,7 +110,8 @@ protected:
 	std::unique_ptr<DiffusePrefilterIBL> mDiffusePrefilterIBL;
 	std::unique_ptr<SpecularPrefilterIBL> mSpecularPrefilterIBL;
 
-	std::map<std::string, EnvironmentResources> mEnvironmentResources;
-
 	std::unique_ptr<Renderer> mRenderer;
+
+	std::string mSelectedEnvironment = "";
+	std::map<std::string, EnvironmentResources> mEnvironmentResources;
 };

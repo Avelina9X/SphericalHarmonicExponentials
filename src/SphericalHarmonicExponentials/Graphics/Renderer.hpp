@@ -23,7 +23,7 @@ public:
 	void Destroy();
 
 	void CommitData( UINT inFrameIndex );
-	void Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources ) const;
+	void Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const;
 
 	RendererData mRendererData = {};
 

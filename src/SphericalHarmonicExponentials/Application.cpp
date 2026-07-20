@@ -134,7 +134,7 @@ void Application::Tick()
 	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	Prepare();
 
-	mComputeCommandList->SetDescriptorHeaps( 1, ppHeaps );
+	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
@@ -176,11 +176,14 @@ void Application::Tick()
 				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog;
 
 				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
-					mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
-					mDiffusePrefilterIBL->Execute( mComputeCommandList.Get(), resources );
-					mSpecularPrefilterIBL->Execute( mComputeCommandList.Get(), resources );
+					//WaitForGPU();
+
+					mCubemapConverter->Execute( mCommandList.Get(), resources );
+					mDiffusePrefilterIBL->Execute( mCommandList.Get(), resources );
+					mSpecularPrefilterIBL->Execute( mCommandList.Get(), resources );
 
 					resources.mEnvironmentDataLoaded = true;
+					mSelectedEnvironment = name;
 				}
 
 				if ( ImGui::TreeNodeEx( "Equirectangular Map", flags | ImGuiTreeNodeFlags_DefaultOpen ) )
@@ -225,7 +228,10 @@ void Application::Tick()
 	Clear();
 
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
-	mRenderer->Draw( mCommandList.Get(), mEnvironmentResources.begin()->second );
+
+	if ( auto pair = mEnvironmentResources.find( mSelectedEnvironment ); pair != mEnvironmentResources.end() && pair->second.mEnvironmentDataLoaded ) {
+		mRenderer->Draw( mCommandList.Get(), pair->second, mIntegratedBRDF->GetShaderResourceView() );
+	}
 
 	Resolve();
 

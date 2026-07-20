@@ -128,13 +128,6 @@ void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandLis
 				IID_PPV_ARGS( mFrameResources[i].mResource.ReleaseAndGetAddressOf() )
 			) );
 
-			//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-			//cbvDesc.BufferLocation = mFrameResources[i].mResource->GetGPUVirtualAddress();
-			//cbvDesc.SizeInBytes = bufferBytes;
-
-			//inAllocator.Allocate( &mFrameResources[i].mHandleCPU, &mFrameResources[i].mHandleGPU );
-			//inDevice->CreateConstantBufferView( &cbvDesc, mFrameResources[i].mHandleCPU );
-
 			mFrameResources[i].mBufferAddress = mFrameResources[i].mResource->GetGPUVirtualAddress();
 
 			// Map
@@ -179,11 +172,11 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		ranges[1].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 		ranges[2].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
+		CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
 		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
-		//rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
-		//rootParameters[2].InitAsDescriptorTable( 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL );
-		//rootParameters[3].InitAsDescriptorTable( 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[2].InitAsDescriptorTable( 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[3].InitAsDescriptorTable( 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL );
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler, anisotropicSampler };
 
@@ -290,7 +283,7 @@ void Renderer::CommitData( UINT inFrameIndex )
 	memcpy( mFrameResources[mFrameIndex].mDataPointer, &mRendererData, sizeof( RendererData ) );
 }
 
-void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources ) const
+void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const
 {
 	inCommandList->IASetPrimitiveTopology( D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
@@ -309,6 +302,9 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 		inCommandList->SetPipelineState( mShadingPipelineStateIBL.Get() );
 
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
+		inCommandList->SetGraphicsRootDescriptorTable( 1, inBRDF );
+		inCommandList->SetGraphicsRootDescriptorTable( 2, inResources.mDiffuseCubemapSrvHandleGPU );
+		inCommandList->SetGraphicsRootDescriptorTable( 3, inResources.mSpecularCubemapSrvHandleGPU );
 
 		inCommandList->DrawIndexedInstanced( mSphereIndexCount, 1, 0, 0, 0 );
 	}
