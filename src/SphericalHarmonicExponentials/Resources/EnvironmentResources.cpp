@@ -168,6 +168,46 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			inDevice->CreateShaderResourceView( mDiffuseCubemap.Get(), &faceDesc, mDiffuseCubemapFaceHandleCPU[i] );
 		}
 	}
+
+	// Create specular cubemap resources
+	{
+		CD3DX12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
+			mCubemapResolution,
+			mCubemapResolution,
+			6,
+			kRoughnessLevelsIBL
+		);
+		textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+
+		// Create GPU resource for Image
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mSpecularCubemap.ReleaseAndGetAddressOf() )
+		) );
+
+		const auto srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::TexCube( textureDesc.Format, kRoughnessLevelsIBL );
+		inAllocator.Allocate( &mSpecularCubemapSrvHandleCPU, &mSpecularCubemapSrvHandleGPU );
+		inDevice->CreateShaderResourceView( mSpecularCubemap.Get(), &srvDesc, mSpecularCubemapSrvHandleCPU );
+
+		for ( UINT i = 0; i < kRoughnessLevelsIBL; ++i ) {
+			const auto uavDesc = CD3DX12_UNORDERED_ACCESS_VIEW_DESC::Tex2DArray( textureDesc.Format, 6, 0, i );
+			inAllocator.Allocate( &mSpecularCubemapUavHandleCPU[i], &mSpecularCubemapUavHandleGPU[i] );
+			inDevice->CreateUnorderedAccessView( mSpecularCubemap.Get(), nullptr, &uavDesc, mSpecularCubemapUavHandleCPU[i] );
+		}
+
+		for ( UINT i = 0; i < 6; ++i ) {
+			const auto faceDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray( textureDesc.Format, 1, kRoughnessLevelsIBL, i );
+			inAllocator.Allocate( &mSpecularCubemapFaceHandleCPU[i], &mSpecularCubemapFaceHandleGPU[i] );
+			inDevice->CreateShaderResourceView( mSpecularCubemap.Get(), &faceDesc, mSpecularCubemapFaceHandleCPU[i] );
+		}
+	}
 }
 
 void EnvironmentResources::Cleanup( UINT64 inCompletedGraphicsFenceValue )

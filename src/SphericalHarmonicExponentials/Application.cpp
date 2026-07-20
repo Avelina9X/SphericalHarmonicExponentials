@@ -192,6 +192,9 @@ void Application::Tick()
 
 					if ( ImGui::TreeNodeEx( "Diffuse Cubemap", flags ) )
 						sDrawCubemap( cubeRes, resources.mDiffuseCubemapFaceHandleGPU );
+
+					if ( ImGui::TreeNodeEx( "Specular Cubemap", flags ) )
+						sDrawCubemap( cubeRes, resources.mSpecularCubemapFaceHandleGPU );
 				}
 				ImGui::PopID();
 			}
