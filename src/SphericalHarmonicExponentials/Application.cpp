@@ -40,6 +40,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
 	mCubemapConverter = std::make_unique<CubemapConverter>();
 	mDiffusePrefilterIBL = std::make_unique<DiffusePrefilterIBL>();
+	mSpecularPrefilterIBL = std::make_unique<SpecularPrefilterIBL>();
 
 	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 256 );
 
@@ -177,6 +178,7 @@ void Application::Tick()
 				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
 					mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
 					mDiffusePrefilterIBL->Execute( mComputeCommandList.Get(), resources );
+					mSpecularPrefilterIBL->Execute( mComputeCommandList.Get(), resources );
 
 					resources.mEnvironmentDataLoaded = true;
 				}
@@ -385,6 +387,7 @@ void Application::CreateDeviceResources()
 		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
 		mCubemapConverter->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 		mDiffusePrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
+		mSpecularPrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 	}
 
 	// Build BRDF

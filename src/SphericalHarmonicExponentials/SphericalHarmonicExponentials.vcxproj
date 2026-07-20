@@ -176,6 +176,7 @@
     <ClCompile Include="Compute\CubemapConverter.cpp" />
     <ClCompile Include="Compute\DiffusePrefilterIBL.cpp" />
     <ClCompile Include="Compute\IntegrateBRDF.cpp" />
+    <ClCompile Include="Compute\SpecularPrefilterIBL.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
@@ -191,6 +192,7 @@
     <ClInclude Include="Compute\CubemapConverter.hpp" />
     <ClInclude Include="Compute\DiffusePrefilterIBL.hpp" />
     <ClInclude Include="Compute\IntegrateBRDF.hpp" />
+    <ClInclude Include="Compute\SpecularPrefilterIBL.hpp" />
     <ClInclude Include="Graphics\Renderer.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Resources\EnvironmentResources.hpp" />
@@ -212,6 +214,10 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\Compute\IBL\IBL_DiffusePrefilterCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\IBL\IBL_SpecularPrefilterCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
     </FxCompile>

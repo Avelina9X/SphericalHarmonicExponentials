@@ -78,6 +78,9 @@
     <ClCompile Include="Graphics\Renderer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Compute\SpecularPrefilterIBL.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -105,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="Graphics\Renderer.hpp">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Compute\SpecularPrefilterIBL.hpp">
+      <Filter>Compute</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +143,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\Graphics\SH_Shade16PS.hlsl">
       <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\IBL\IBL_SpecularPrefilterCS.hlsl">
+      <Filter>Shaders\Compute\IBL</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
