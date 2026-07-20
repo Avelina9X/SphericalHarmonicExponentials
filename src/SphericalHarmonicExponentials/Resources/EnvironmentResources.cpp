@@ -128,6 +128,46 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			inDevice->CreateShaderResourceView( mUnfilteredCubemap.Get(), &faceDesc, mUnfilteredCubemapFaceHandleCPU[i] );
 		}
 	}
+
+	// Create diffuse cubemap resources
+	{
+		CD3DX12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
+			kDiffuseCubemapResolution,
+			kDiffuseCubemapResolution,
+			6,
+			1
+		);
+		textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+
+		// Create GPU resource for Image
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mDiffuseCubemap.ReleaseAndGetAddressOf() )
+		) );
+
+		CD3DX12_SHADER_RESOURCE_VIEW_DESC srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::TexCube( textureDesc.Format, 1 );
+		CD3DX12_UNORDERED_ACCESS_VIEW_DESC uavDesc = CD3DX12_UNORDERED_ACCESS_VIEW_DESC::Tex2DArray( textureDesc.Format, 6 );
+
+		inAllocator.Allocate( &mDiffuseCubemapSrvHandleCPU, &mDiffuseCubemapSrvHandleGPU );
+		inAllocator.Allocate( &mDiffuseCubemapUavHandleCPU, &mDiffuseCubemapUavHandleGPU );
+
+		inDevice->CreateShaderResourceView( mDiffuseCubemap.Get(), &srvDesc, mDiffuseCubemapSrvHandleCPU );
+		inDevice->CreateUnorderedAccessView( mDiffuseCubemap.Get(), nullptr, &uavDesc, mDiffuseCubemapUavHandleCPU );
+
+		for ( UINT i = 0; i < 6; ++i ) {
+			CD3DX12_SHADER_RESOURCE_VIEW_DESC faceDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray( textureDesc.Format, 1, 1, i );
+
+			inAllocator.Allocate( &mDiffuseCubemapFaceHandleCPU[i], &mDiffuseCubemapFaceHandleGPU[i] );
+			inDevice->CreateShaderResourceView( mDiffuseCubemap.Get(), &faceDesc, mDiffuseCubemapFaceHandleCPU[i] );
+		}
+	}
 }
 
 void EnvironmentResources::Cleanup( UINT64 inCompletedGraphicsFenceValue )

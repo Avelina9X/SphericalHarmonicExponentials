@@ -141,6 +141,4 @@ void CubemapConverter::Execute( ID3D12GraphicsCommandList *inCommandList, Enviro
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
 		inCommandList->ResourceBarrier( 1, &barrier );
 	}
-
-	inResources.mEnvironmentDataLoaded = true;
 }

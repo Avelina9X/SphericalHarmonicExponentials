@@ -25,8 +25,7 @@ void main(
         accu += gInput[uint3( pixelCoord.x * 2 + 1, pixelCoord.y * 2, groupId.z )].rgb;
         accu += gInput[uint3( pixelCoord.x * 2, pixelCoord.y * 2 + 1, groupId.z )].rgb;
         accu += gInput[uint3( pixelCoord.x * 2 + 1, pixelCoord.y * 2 + 1, groupId.z )].rgb;
-    
-        // Sample from equirectangular texture    
+       
         gOutput[uint3( pixelCoord, groupId.z )] = float4( accu / 4, 1.0f );
     }
 }

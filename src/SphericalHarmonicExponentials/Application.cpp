@@ -39,6 +39,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 
 	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
 	mCubemapConverter = std::make_unique<CubemapConverter>();
+	mDiffusePrefilterIBL = std::make_unique<DiffusePrefilterIBL>();
 
 	CreateDevice();
 	CreateDeviceResources();
@@ -96,6 +97,30 @@ void Application::OnDestroy()
 
 #pragma endregion
 
+static void sDrawCubemap( float inRes, D3D12_GPU_DESCRIPTOR_HANDLE *inHandles )
+{
+	ImVec2 origin = ImGui::GetCursorPos();
+
+	ImVec2 imSize = { inRes, inRes };
+
+	ImGui::SetCursorPos( { origin.x + inRes * 1, origin.y + inRes * 0 } );
+	ImGui::Image( inHandles[2].ptr, imSize );
+
+	ImGui::SetCursorPos( { origin.x + inRes * 0, origin.y + inRes * 1 } );
+	ImGui::Image( inHandles[1].ptr, imSize );
+
+	ImGui::SetCursorPos( { origin.x + inRes * 1, origin.y + inRes * 1 } );
+	ImGui::Image( inHandles[4].ptr, imSize );
+
+	ImGui::SetCursorPos( { origin.x + inRes * 2, origin.y + inRes * 1 } );
+	ImGui::Image( inHandles[0].ptr, imSize );
+
+	ImGui::SetCursorPos( { origin.x + inRes * 3, origin.y + inRes * 1 } );
+	ImGui::Image( inHandles[5].ptr, imSize );
+
+	ImGui::SetCursorPos( { origin.x + inRes * 1, origin.y + inRes * 2 } );
+	ImGui::Image( inHandles[3].ptr, imSize );
+}
 
 void Application::Tick()
 {
@@ -112,55 +137,49 @@ void Application::Tick()
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	ImGui::ShowMetricsWindow();
 
-	ImGui::Begin( "HDRIs", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+	ImGui::SetNextWindowPos( { 32.0f, 32.0f }, ImGuiCond_Once );
+	ImGui::SetNextWindowSize( { 0.0f, ImGui::GetMainViewport()->Size.y / 2 - 32 }, ImGuiCond_Once );
+	ImGui::Begin( "Settings", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 	{
-		float width = ImGui::GetContentRegionAvail().x;
+		ImGuiIO &io = ImGui::GetIO();
 
-		ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
-		ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
+		float width = std::max( 256.0f, ImGui::GetContentRegionAvail().x );
 
-		ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { 256, 256 } );
+
+		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate );
+		//ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
+		//ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
+
+		ImGui::Dummy( { 256.0f, 0.0f } );
+		ImGui::SeparatorText( "Shading" );
+
+		if ( ImGui::CollapsingHeader( "BRDF" ) ) {
+			ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { width, width } );
+		}
+
+		ImGui::Dummy( { 256.0f, 0.0f } );
+		ImGui::SeparatorText( "HDRIs" );
 
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
+				ImGui::PushID( name.c_str() );
 				assert( resources.mEquirectangularLoaded );
-				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { 256, 128 } );
+				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { width, width / 2 } );
 
-				if ( !resources.mEnvironmentDataLoaded || true ) {
-					if ( ImGui::Button( "Compute" ) ) {
-						mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
-					}
+				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
+					mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
+					mDiffusePrefilterIBL->Execute( mComputeCommandList.Get(), resources );
+
+					resources.mEnvironmentDataLoaded = true;
 				}
 
 				if ( resources.mEnvironmentDataLoaded ) {
-					ImVec2 origin = ImGui::GetCursorPos();
-					ImDrawList *drawList = ImGui::GetWindowDrawList();
-
-					float imRes = 64;
-					ImVec2 imSize = { imRes, imRes };
-
-					const auto &hdrSkyboxCubemap = resources.mUnfilteredCubemapFaceHandleGPU;
-
-					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 0 } );
-					ImGui::Image( hdrSkyboxCubemap[2].ptr, imSize );
-
-					ImGui::SetCursorPos( { origin.x + imRes * 0, origin.y + imRes * 1 } );
-					ImGui::Image( hdrSkyboxCubemap[1].ptr, imSize );
-
-					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 1 } );
-					ImGui::Image( hdrSkyboxCubemap[4].ptr, imSize );
-
-					ImGui::SetCursorPos( { origin.x + imRes * 2, origin.y + imRes * 1 } );
-					ImGui::Image( hdrSkyboxCubemap[0].ptr, imSize );
-
-					ImGui::SetCursorPos( { origin.x + imRes * 3, origin.y + imRes * 1 } );
-					ImGui::Image( hdrSkyboxCubemap[5].ptr, imSize );
-
-					ImGui::SetCursorPos( { origin.x + imRes * 1, origin.y + imRes * 2 } );
-					ImGui::Image( hdrSkyboxCubemap[3].ptr, imSize );
+					float cubeRes = width / 4;
+					sDrawCubemap( cubeRes, resources.mUnfilteredCubemapFaceHandleGPU );
+					sDrawCubemap( cubeRes, resources.mDiffuseCubemapFaceHandleGPU );
 				}
+				ImGui::PopID();
 			}
 		}
 	}
@@ -327,6 +346,7 @@ void Application::CreateDeviceResources()
 	{
 		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
 		mCubemapConverter->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
+		mDiffusePrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 	}
 
 	// Build BRDF

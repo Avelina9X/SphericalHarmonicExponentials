@@ -7,6 +7,7 @@
 
 #include "Compute/IntegrateBRDF.hpp"
 #include "Compute/CubemapConverter.hpp"
+#include "Compute/DiffusePrefilterIBL.hpp"
 
 class Application
 {
@@ -103,6 +104,7 @@ protected:
 
 	std::unique_ptr<IntegrateBRDF> mIntegratedBRDF;
 	std::unique_ptr<CubemapConverter> mCubemapConverter;
+	std::unique_ptr<DiffusePrefilterIBL> mDiffusePrefilterIBL;
 
 	std::map<std::string, EnvironmentResources> mEnvironmentResources;
 };

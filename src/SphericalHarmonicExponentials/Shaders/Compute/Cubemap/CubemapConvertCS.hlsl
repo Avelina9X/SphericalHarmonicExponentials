@@ -10,9 +10,9 @@ Texture2D<float4> gEnvironment : register( t0 );
 RWTexture2DArray<float4> gOutput : register( u0 );
 SamplerState gLinearClamp : register( s0 );
 
-static const float PI = 3.14159265f;
-static const float TAU = PI * 2;
-static const float PI_DIV2 = PI / 2;
+static const float PI = 3.141592654f;
+static const float TAU = 6.283185307f;
+static const float PI_DIV2 = 1.570796327f;
 
 float2 DirToUV( float3 dir )
 {
@@ -56,6 +56,7 @@ void main(
 {
     uint2 pixelCoord = dispatchThreadId.xy;
     
+    // Get UV (-1..1) coordinates of face
     float2 uv = float2( pixelCoord.xy + 0.5 ) / gResolution;
     uv = uv * 2 - 1;
     uv.y = -uv.y;
@@ -66,6 +67,7 @@ void main(
     // Sample from equirectangular texture
     float4 color = gEnvironment.SampleLevel( gLinearClamp, DirToUV( normal ), 0 );
     
+    // Apply optional clamping
     if ( gClampValue > 0.0f ) {
         color = min( color, gClampValue );
     }

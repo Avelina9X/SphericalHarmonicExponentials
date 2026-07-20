@@ -55,11 +55,7 @@ void EnvironmentParser::ParseEnvironments()
 			}
 		}
 	}
-
-	for ( auto &[name, path] : mEnvironments ) {
-		OutputDebugStringA( name.c_str() );
-		OutputDebugStringA( " - " );
-		OutputDebugStringW( path.c_str() );
-		OutputDebugStringA( "\n" );
+	else {
+		assert( false );
 	}
 }
