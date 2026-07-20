@@ -10,6 +10,7 @@ struct RendererData
 	DirectX::XMFLOAT3 Albedo = { 1.0f, 1.0f, 1.0f };
 	float Roughness = 0.5;
 	float Metallic = 1.0f;
+	float Exposure = 0.0f;
 };
 
 class Renderer

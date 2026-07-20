@@ -32,6 +32,8 @@ public:
 		outHeight = 1080;
 	}
 
+	void ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources );
+
 	void Tick();
 
 protected:

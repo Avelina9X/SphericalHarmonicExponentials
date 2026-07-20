@@ -121,9 +121,20 @@ static void sDrawCubemap( float inRes, D3D12_GPU_DESCRIPTOR_HANDLE *inHandles )
 	ImGui::Image( inHandles[3].ptr, imSize );
 }
 
+
+
+void Application::ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources )
+{
+	mCubemapConverter->Execute( mCommandList.Get(), inResources );
+	mDiffusePrefilterIBL->Execute( mCommandList.Get(), inResources );
+	mSpecularPrefilterIBL->Execute( mCommandList.Get(), inResources );
+
+	inResources.mEnvironmentDataLoaded = true;
+	mSelectedEnvironment = inName;
+}
+
 void Application::Tick()
 {
-
 	const UINT64 completedGraphicsFenceValue = mFence->GetCompletedValue();
 	const UINT64 currentGraphicsFenceValue = mFenceValues[mBackBufferIndex];
 
@@ -131,6 +142,13 @@ void Application::Tick()
 	Prepare();
 
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
+
+	for ( auto &[name, resources] : mEnvironmentResources ) {
+		if ( !resources.mEnvironmentDataLoaded ) {
+			ComputeEnvironmentData( name, resources );
+			break;
+		}
+	}
 
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
@@ -160,6 +178,7 @@ void Application::Tick()
 		ImGui::ColorEdit3( "Albedo", &mRenderer->mRendererData.Albedo.x );
 		ImGui::SliderFloat( "Roughness", &mRenderer->mRendererData.Roughness, 0.01f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Metallic", &mRenderer->mRendererData.Metallic, 0.0f, 1.0f, "%.2f" );
+		ImGui::SliderFloat( "Exposure", &mRenderer->mRendererData.Exposure, -5.0f, 5.0f, "%.0f" );
 
 		ImGui::Separator();
 
@@ -178,14 +197,14 @@ void Application::Tick()
 				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog;
 
 				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
-					//WaitForGPU();
+					ComputeEnvironmentData( name, resources );
+				}
 
-					mCubemapConverter->Execute( mCommandList.Get(), resources );
-					mDiffusePrefilterIBL->Execute( mCommandList.Get(), resources );
-					mSpecularPrefilterIBL->Execute( mCommandList.Get(), resources );
-
-					resources.mEnvironmentDataLoaded = true;
-					mSelectedEnvironment = name;
+				if ( resources.mEnvironmentDataLoaded ) {
+					ImGui::SameLine();
+					if ( ImGui::Button( "Use" ) ) {
+						mSelectedEnvironment = name;
+					}
 				}
 
 				if ( ImGui::TreeNodeEx( "Equirectangular Map", flags | ImGuiTreeNodeFlags_DefaultOpen ) )
@@ -226,8 +245,6 @@ void Application::Tick()
 	}
 
 	Clear();
-
-	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
 	if ( auto pair = mEnvironmentResources.find( mSelectedEnvironment ); pair != mEnvironmentResources.end() && pair->second.mEnvironmentDataLoaded ) {
 		mRenderer->Draw( mCommandList.Get(), pair->second, mIntegratedBRDF->GetShaderResourceView() );

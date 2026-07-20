@@ -118,6 +118,9 @@
     <None Include="Shaders\Graphics\CommonShade.hlsli">
       <Filter>Shaders\Graphics</Filter>
     </None>
+    <None Include="Shaders\Graphics\AgX.hlsli">
+      <Filter>Shaders\Graphics</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Compute\IntegrateBRDF_CS.hlsl">

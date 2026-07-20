@@ -1,4 +1,5 @@
 #include "CommonShade.hlsli"
+#include "AgX.hlsli"
 
 Texture2D<float2> gIntegratedBRDF : register( t0 );
 TextureCube<float4> gDiffuseTex : register( t1 );
@@ -85,14 +86,11 @@ float4 main( PSInput input ) : SV_TARGET
     float3 specular = prefilteredColor * ( F0 * brdf.x + brdf.y );
     
     float3 ambient = ( kD * diffuse + specular ) * gAO;
-    
-    
+
     float3 color = ambient;
     
     // HDR tonemap
-    //color = color / ( color + 1.0f );
-    //color = ACESFilm( color );
-    //color = agx( color * 2.0f );
+    color = agx( ldexp( color, gExposure ) );
     
     // Gamma correct
     color = pow( color, 1.0f / 2.2f );
