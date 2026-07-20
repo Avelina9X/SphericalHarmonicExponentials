@@ -25,6 +25,12 @@
     <Filter Include="Shaders\Compute\IBL">
       <UniqueIdentifier>{ca55f93a-72f0-4c58-b80c-3c991d3c11cc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{2692766c-b033-4615-9434-d08e40b7b55a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Graphics">
+      <UniqueIdentifier>{2f6c9613-cb06-47e9-bef4-4c2859fc5a81}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -69,6 +75,9 @@
     <ClCompile Include="Compute\DiffusePrefilterIBL.cpp">
       <Filter>Compute</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Renderer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -94,9 +103,15 @@
     <ClInclude Include="Compute\DiffusePrefilterIBL.hpp">
       <Filter>Compute</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Renderer.hpp">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Shaders\Graphics\CommonShade.hlsli">
+      <Filter>Shaders\Graphics</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Compute\IntegrateBRDF_CS.hlsl">
@@ -110,6 +125,18 @@
     </FxCompile>
     <FxCompile Include="Shaders\Compute\IBL\IBL_DiffusePrefilterCS.hlsl">
       <Filter>Shaders\Compute\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\ShadeVS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\IBL_ShadePS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SH_Shade32PS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SH_Shade16PS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

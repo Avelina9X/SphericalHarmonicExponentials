@@ -9,6 +9,8 @@
 #include "Compute/CubemapConverter.hpp"
 #include "Compute/DiffusePrefilterIBL.hpp"
 
+#include "Graphics/Renderer.hpp"
+
 class Application
 {
 public:
@@ -107,4 +109,6 @@ protected:
 	std::unique_ptr<DiffusePrefilterIBL> mDiffusePrefilterIBL;
 
 	std::map<std::string, EnvironmentResources> mEnvironmentResources;
+
+	std::unique_ptr<Renderer> mRenderer;
 };

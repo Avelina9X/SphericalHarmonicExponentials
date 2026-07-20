@@ -41,6 +41,8 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mCubemapConverter = std::make_unique<CubemapConverter>();
 	mDiffusePrefilterIBL = std::make_unique<DiffusePrefilterIBL>();
 
+	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 256 );
+
 	CreateDevice();
 	CreateDeviceResources();
 	CreateSizedResources();
@@ -137,12 +139,12 @@ void Application::Tick()
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+	ImGuiIO &io = ImGui::GetIO();
 
 	ImGui::SetNextWindowPos( { 32.0f, 32.0f }, ImGuiCond_Once );
 	ImGui::SetNextWindowSize( { 0.0f, ImGui::GetMainViewport()->Size.y / 2 - 32 }, ImGuiCond_Once );
 	ImGui::Begin( "Settings", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 	{
-		ImGuiIO &io = ImGui::GetIO();
 
 		float width = std::max( 256.0f, ImGui::GetContentRegionAvail().x );
 
@@ -158,6 +160,10 @@ void Application::Tick()
 			ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { width, width } );
 		}
 
+		ImGui::Checkbox( "Enable IBL", &mRenderer->mEnableIBL );
+		ImGui::Checkbox( "Enable SH", &mRenderer->mEnableSH );
+		ImGui::Checkbox( "Half Precision SH", &mRenderer->mUseHalfSH );
+
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
 
@@ -165,7 +171,8 @@ void Application::Tick()
 			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
 				ImGui::PushID( name.c_str() );
 				assert( resources.mEquirectangularLoaded );
-				ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { width, width / 2 } );
+
+				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog;
 
 				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
 					mCubemapConverter->Execute( mComputeCommandList.Get(), resources );
@@ -174,10 +181,17 @@ void Application::Tick()
 					resources.mEnvironmentDataLoaded = true;
 				}
 
+				if ( ImGui::TreeNodeEx( "Equirectangular Map", flags | ImGuiTreeNodeFlags_DefaultOpen ) )
+					ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { width, width / 2 } );
+
 				if ( resources.mEnvironmentDataLoaded ) {
 					float cubeRes = width / 4;
-					sDrawCubemap( cubeRes, resources.mUnfilteredCubemapFaceHandleGPU );
-					sDrawCubemap( cubeRes, resources.mDiffuseCubemapFaceHandleGPU );
+
+					if ( ImGui::TreeNodeEx( "Unfiltered Cubemap", flags ) )
+						sDrawCubemap( cubeRes, resources.mUnfilteredCubemapFaceHandleGPU );
+
+					if ( ImGui::TreeNodeEx( "Diffuse Cubemap", flags ) )
+						sDrawCubemap( cubeRes, resources.mDiffuseCubemapFaceHandleGPU );
 				}
 				ImGui::PopID();
 			}
@@ -187,9 +201,26 @@ void Application::Tick()
 
 	Execute();
 
+	// Update renderer data
+	{
+		if ( !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging( ImGuiMouseButton_Middle ) ) {
+			mRenderer->mCameraPitch += io.MouseDelta.y * 0.0025f;
+			mRenderer->mCameraYaw -= io.MouseDelta.x * 0.0025f;
+
+			mRenderer->mCameraPitch = std::clamp( mRenderer->mCameraPitch, -DirectX::XM_PIDIV2 * 0.99f, DirectX::XM_PIDIV2 * 0.99f );
+			mRenderer->mCameraYaw = std::fmod( mRenderer->mCameraYaw, DirectX::XM_2PI );
+		}
+
+		mRenderer->mViewportWidth = mOutputWidth;
+		mRenderer->mViewportHeight = mOutputHeight;
+
+		mRenderer->CommitData( mBackBufferIndex );
+	}
+
 	Clear();
 
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
+	mRenderer->Draw( mCommandList.Get(), mEnvironmentResources.begin()->second );
 
 	Resolve();
 
@@ -342,6 +373,10 @@ void Application::CreateDeviceResources()
 		}
 	}
 
+	// Load Renderer
+	mRenderer->CreateResources( mDevice.Get(), mCommandList.Get(), mSrvHeapAllocator, mFenceValues[mBackBufferIndex] );
+	mRenderer->LoadShaders( mDevice.Get(), kBackBufferFormat, kDepthBufferFormat, kSampleCount, rootFeatureData.HighestVersion );
+
 	// Create all compute resources
 	{
 		mIntegratedBRDF->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
@@ -369,9 +404,12 @@ void Application::CreateDeviceResources()
 	// Cleanup upload heaps
 	{
 		const UINT64 completedFence = mFence->GetCompletedValue();
+
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			resources.Cleanup( completedFence );
 		}
+
+		mRenderer->Cleanup( completedFence );
 	}
 }
 
