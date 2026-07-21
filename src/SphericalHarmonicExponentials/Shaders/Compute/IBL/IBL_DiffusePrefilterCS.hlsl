@@ -1,4 +1,4 @@
-#define NUM_SAMPLES 256
+#define NUM_SAMPLES 1024
 
 cbuffer Constants : register( b0 )
 {

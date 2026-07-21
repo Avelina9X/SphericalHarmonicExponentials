@@ -55,6 +55,8 @@ void DiffusePrefilterIBL::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGN
 
 void DiffusePrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources )
 {
+	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"DiffusePrefilterIBL" );
+
 	// If previously created, transition back to UAV
 	if ( inResources.mEnvironmentDataLoaded ) {
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
@@ -77,4 +79,6 @@ void DiffusePrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
 	inCommandList->ResourceBarrier( 1, &barrier );
+
+	PIXEndEvent( inCommandList );
 }

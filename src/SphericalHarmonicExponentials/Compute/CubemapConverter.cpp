@@ -90,6 +90,8 @@ void CubemapConverter::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNATU
 
 void CubemapConverter::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, float inClampValue )
 {
+	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"CubemapConverter" );
+
 	const UINT cubemapResolution = inResources.mCubemapResolution;
 
 	// If previously created, transition back to UAV
@@ -141,4 +143,6 @@ void CubemapConverter::Execute( ID3D12GraphicsCommandList *inCommandList, Enviro
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
 		inCommandList->ResourceBarrier( 1, &barrier );
 	}
+
+	PIXEndEvent( inCommandList );
 }

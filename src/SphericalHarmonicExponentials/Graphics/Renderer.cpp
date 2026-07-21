@@ -194,10 +194,10 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
 		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
+		CD3DX12_ROOT_PARAMETER1 rootParameters[3] = {};
 		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
-		//rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
-		//rootParameters[2].InitAsShaderResourceView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[2].InitAsShaderResourceView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL );
 		//rootParameters[3].InitAsShaderResourceView( 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL );
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler };
@@ -321,12 +321,15 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 
 		if ( mUseHalfSH ) {
 			inCommandList->SetPipelineState( mShadingPipelineStateSH16.Get() );
+			inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics16Address );
 		}
 		else {
 			inCommandList->SetPipelineState( mShadingPipelineStateSH32.Get() );
+			inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics32Address );
 		}
 
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
+		inCommandList->SetGraphicsRootDescriptorTable( 1, inBRDF );
 
 		inCommandList->DrawIndexedInstanced( mSphereIndexCount, 1, 0, 0, 0 );
 	}

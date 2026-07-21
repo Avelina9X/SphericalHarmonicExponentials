@@ -9,6 +9,7 @@
 #include "Compute/CubemapConverter.hpp"
 #include "Compute/DiffusePrefilterIBL.hpp"
 #include "Compute/SpecularPrefilterIBL.hpp"
+#include "Compute/DiffusePrefilterSH.hpp"
 
 #include "Graphics/Renderer.hpp"
 
@@ -101,9 +102,13 @@ protected:
 	std::unique_ptr<CubemapConverter> mCubemapConverter;
 	std::unique_ptr<DiffusePrefilterIBL> mDiffusePrefilterIBL;
 	std::unique_ptr<SpecularPrefilterIBL> mSpecularPrefilterIBL;
+	std::unique_ptr<DiffusePrefilterSH> mDiffusePrefilterSH;
 
 	std::unique_ptr<Renderer> mRenderer;
 
 	std::string mSelectedEnvironment = "";
 	std::map<std::string, EnvironmentResources> mEnvironmentResources;
+
+	float mClampValue = 1000.0f;
+	float mSpecularPrefilterMipBias = 1.0f;
 };

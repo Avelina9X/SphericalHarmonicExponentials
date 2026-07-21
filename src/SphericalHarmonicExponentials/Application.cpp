@@ -41,6 +41,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mCubemapConverter = std::make_unique<CubemapConverter>();
 	mDiffusePrefilterIBL = std::make_unique<DiffusePrefilterIBL>();
 	mSpecularPrefilterIBL = std::make_unique<SpecularPrefilterIBL>();
+	mDiffusePrefilterSH = std::make_unique<DiffusePrefilterSH>();
 
 	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 256 );
 
@@ -125,9 +126,14 @@ static void sDrawCubemap( float inRes, D3D12_GPU_DESCRIPTOR_HANDLE *inHandles )
 
 void Application::ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources )
 {
-	mCubemapConverter->Execute( mCommandList.Get(), inResources );
-	mDiffusePrefilterIBL->Execute( mCommandList.Get(), inResources );
-	mSpecularPrefilterIBL->Execute( mCommandList.Get(), inResources );
+	ID3D12GraphicsCommandList *commandList = mCommandList.Get();
+
+	WaitForGPU();
+
+	mCubemapConverter->Execute( commandList, inResources, mClampValue );
+	mDiffusePrefilterIBL->Execute( commandList, inResources );
+	mSpecularPrefilterIBL->Execute( commandList, inResources, mSpecularPrefilterMipBias );
+	mDiffusePrefilterSH->Execute( commandList, inResources );
 
 	inResources.mEnvironmentDataLoaded = true;
 	mSelectedEnvironment = inName;
@@ -157,14 +163,14 @@ void Application::Tick()
 	ImGuiIO &io = ImGui::GetIO();
 
 	ImGui::SetNextWindowPos( { 32.0f, 32.0f }, ImGuiCond_Once );
-	ImGui::SetNextWindowSize( { 0.0f, ImGui::GetMainViewport()->Size.y / 2 - 32 }, ImGuiCond_Once );
+	ImGui::SetNextWindowSize( { 0.0f, ImGui::GetMainViewport()->Size.y - 64 }, ImGuiCond_Once );
 	ImGui::Begin( "Settings", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 	{
 
 		float width = std::max( 256.0f, ImGui::GetContentRegionAvail().x );
 
 
-		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate );
+		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", io.DeltaTime * 1000, io.Framerate );
 		//ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
 		//ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
 
@@ -188,6 +194,9 @@ void Application::Tick()
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
+
+		ImGui::SliderFloat( "Cubemap Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
+		ImGui::SliderFloat( "Specular Bias", &mSpecularPrefilterMipBias, 0.0f, 2.0f );
 
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
@@ -393,6 +402,7 @@ void Application::CreateDeviceResources()
 		mCubemapConverter->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 		mDiffusePrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 		mSpecularPrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
+		mDiffusePrefilterSH->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 	}
 
 	// Build BRDF

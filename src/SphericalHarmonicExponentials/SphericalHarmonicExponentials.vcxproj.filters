@@ -31,6 +31,9 @@
     <Filter Include="Shaders\Graphics">
       <UniqueIdentifier>{2f6c9613-cb06-47e9-bef4-4c2859fc5a81}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Compute\SH">
+      <UniqueIdentifier>{ff4c6896-003b-4a9e-8d87-a8cc2d8778a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -81,6 +84,9 @@
     <ClCompile Include="Compute\SpecularPrefilterIBL.cpp">
       <Filter>Compute</Filter>
     </ClCompile>
+    <ClCompile Include="Compute\DiffusePrefilterSH.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -112,6 +118,9 @@
     <ClInclude Include="Compute\SpecularPrefilterIBL.hpp">
       <Filter>Compute</Filter>
     </ClInclude>
+    <ClInclude Include="Compute\DiffusePrefilterSH.hpp">
+      <Filter>Compute</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -120,6 +129,9 @@
     </None>
     <None Include="Shaders\Graphics\AgX.hlsli">
       <Filter>Shaders\Graphics</Filter>
+    </None>
+    <None Include="Shaders\CommonSH.hlsli">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +161,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\Compute\IBL\IBL_SpecularPrefilterCS.hlsl">
       <Filter>Shaders\Compute\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_DiffusePrefilterCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_DiffusePrefilterAccCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -53,4 +53,10 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE mSpecularCubemapUavHandleGPU[kRoughnessLevelsIBL];
 	D3D12_CPU_DESCRIPTOR_HANDLE mSpecularCubemapFaceHandleCPU[6];
 	D3D12_GPU_DESCRIPTOR_HANDLE mSpecularCubemapFaceHandleGPU[6];
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mDiffuseHarmonics32;
+	D3D12_GPU_VIRTUAL_ADDRESS mDiffuseHarmonics32Address;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mDiffuseHarmonics16;
+	D3D12_GPU_VIRTUAL_ADDRESS mDiffuseHarmonics16Address;
 };
