@@ -87,6 +87,9 @@
     <ClCompile Include="Compute\DiffusePrefilterSH.cpp">
       <Filter>Compute</Filter>
     </ClCompile>
+    <ClCompile Include="Compute\SpecularPrefilterSH.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -119,6 +122,9 @@
       <Filter>Compute</Filter>
     </ClInclude>
     <ClInclude Include="Compute\DiffusePrefilterSH.hpp">
+      <Filter>Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="Compute\SpecularPrefilterSH.hpp">
       <Filter>Compute</Filter>
     </ClInclude>
   </ItemGroup>
@@ -166,6 +172,18 @@
       <Filter>Shaders\Compute\SH</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Compute\SH\SH_DiffusePrefilterAccCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_SpecularPrefilterCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_SpecularPrefilterAccCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_SpecularSolverCS.hlsl">
+      <Filter>Shaders\Compute\SH</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Compute\SH\SH_SpecularSumCS.hlsl">
       <Filter>Shaders\Compute\SH</Filter>
     </FxCompile>
   </ItemGroup>

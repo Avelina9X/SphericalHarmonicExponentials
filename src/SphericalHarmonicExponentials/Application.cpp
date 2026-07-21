@@ -42,6 +42,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mDiffusePrefilterIBL = std::make_unique<DiffusePrefilterIBL>();
 	mSpecularPrefilterIBL = std::make_unique<SpecularPrefilterIBL>();
 	mDiffusePrefilterSH = std::make_unique<DiffusePrefilterSH>();
+	mSpecularPrefilterSH = std::make_unique<SpecularPrefilterSH>();
 
 	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 256 );
 
@@ -134,6 +135,7 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 	mDiffusePrefilterIBL->Execute( commandList, inResources );
 	mSpecularPrefilterIBL->Execute( commandList, inResources, mSpecularPrefilterMipBias );
 	mDiffusePrefilterSH->Execute( commandList, inResources );
+	mSpecularPrefilterSH->Execute( commandList, inResources );
 
 	inResources.mEnvironmentDataLoaded = true;
 	mSelectedEnvironment = inName;
@@ -403,6 +405,7 @@ void Application::CreateDeviceResources()
 		mDiffusePrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 		mSpecularPrefilterIBL->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
 		mDiffusePrefilterSH->CreateResources( mDevice.Get(), rootFeatureData.HighestVersion );
+		mSpecularPrefilterSH->CreateResources( mDevice.Get(), mSrvHeapAllocator, rootFeatureData.HighestVersion );
 	}
 
 	// Build BRDF

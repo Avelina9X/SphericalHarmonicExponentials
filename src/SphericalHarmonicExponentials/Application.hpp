@@ -10,6 +10,7 @@
 #include "Compute/DiffusePrefilterIBL.hpp"
 #include "Compute/SpecularPrefilterIBL.hpp"
 #include "Compute/DiffusePrefilterSH.hpp"
+#include "Compute/SpecularPrefilterSH.hpp"
 
 #include "Graphics/Renderer.hpp"
 
@@ -103,6 +104,7 @@ protected:
 	std::unique_ptr<DiffusePrefilterIBL> mDiffusePrefilterIBL;
 	std::unique_ptr<SpecularPrefilterIBL> mSpecularPrefilterIBL;
 	std::unique_ptr<DiffusePrefilterSH> mDiffusePrefilterSH;
+	std::unique_ptr<SpecularPrefilterSH> mSpecularPrefilterSH;
 
 	std::unique_ptr<Renderer> mRenderer;
 

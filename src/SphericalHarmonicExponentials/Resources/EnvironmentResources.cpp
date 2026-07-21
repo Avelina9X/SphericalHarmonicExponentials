@@ -252,6 +252,46 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		// Write virtual address
 		mDiffuseHarmonics16Address = mDiffuseHarmonics16->GetGPUVirtualAddress();
 	}
+
+	// 32 bit specular harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = sizeof( float ) * 33 * 3 + sizeof( float ); // 33*3 floats + pad float 
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mSpecularHarmonics32.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mSpecularHarmonics32Address = mSpecularHarmonics32->GetGPUVirtualAddress();
+	}
+
+	// 16 bit specular harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = sizeof( UINT ) * 16 * 3 + sizeof( float ) * 4; // Packed format
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mSpecularHarmonics16.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mSpecularHarmonics16Address = mSpecularHarmonics16->GetGPUVirtualAddress();
+	}
 }
 
 void EnvironmentResources::Cleanup( UINT64 inCompletedGraphicsFenceValue )

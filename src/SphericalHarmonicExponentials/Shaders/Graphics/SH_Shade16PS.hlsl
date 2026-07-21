@@ -4,7 +4,7 @@
 
 Texture2D<float2> gIntegratedBRDF : register( t0 );
 StructuredBuffer<SHCoeffsL2Half> gDiffuseSH : register( t1 );
-//StructuredBuffer<SHCoeffsL2L4Half> gSpecularSH : register( t2 );
+StructuredBuffer<SHCoeffsL2L4Half> gSpecularSH : register( t2 );
 
 SamplerState gClampSampler : register( s0 );
 SamplerState gSampler : register( s1 );
@@ -32,11 +32,10 @@ float4 main( PSInput input ) : SV_TARGET
     SHBasisL2 shBasisD = ComputeSHBasisL2( N );
     float3 irradiance = ReconstructSHL2HalfFromSB( shBasisD, gDiffuseSH, 0 );
     
-    //SHBasisL4 shBasisP = ComputeSHBasisL4( R );
-    //SHBasisL2 shBasisQ = ComputeSHBasisL2( H );
-    //ApplyVonMisesFisher( shBasisP, shBasisQ, gRoughness * gRoughness );
-    //float3 prefilteredColor = ReconstructSHL2L4HalfFromSB( shBasisP, shBasisQ, gSpecularSH, 0 );
-    float3 prefilteredColor = 0;
+    SHBasisL4 shBasisP = ComputeSHBasisL4( R );
+    SHBasisL2 shBasisQ = ComputeSHBasisL2( H );
+    ApplyVonMisesFisher( shBasisP, shBasisQ, gRoughness * gRoughness );
+    float3 prefilteredColor = ReconstructSHL2L4HalfFromSB( shBasisP, shBasisQ, gSpecularSH, 0 );
     
     float gAO = 1.0f;
     
