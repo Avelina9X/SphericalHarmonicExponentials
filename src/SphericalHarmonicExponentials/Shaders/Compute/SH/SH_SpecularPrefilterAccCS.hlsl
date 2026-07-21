@@ -8,10 +8,10 @@ static const float PI_DIV2 = PI / 2;
 
 float3 FibonacciSphere( uint i, uint k )
 {
-    float phi = PI * ( 3.0f - sqrt( 5.0f ) );
-    float y = 1.0f - 2.0f * i / ( k - 1.0f );
-    float r = sqrt( 1.0 - y * y );
-    float theta = phi * i;
+    precise float phi = PI * ( 3.0f - sqrt( 5.0f ) );
+    precise float y = 1.0f - 2.0f * i / ( k - 1.0f );
+    precise float r = sqrt( 1.0 - y * y );
+    precise float theta = phi * i;
     
     return float3( r * cos( theta ), y, r * sin( theta ) );
 }

@@ -130,6 +130,7 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 	ID3D12GraphicsCommandList *commandList = mCommandList.Get();
 
 	WaitForGPU();
+	WaitForGPU();
 
 	mCubemapConverter->Execute( commandList, inResources, mClampValue );
 	mDiffusePrefilterIBL->Execute( commandList, inResources );
@@ -158,6 +159,11 @@ void Application::Tick()
 		}
 	}
 
+	//static int i = 0;
+	//if ( i++ % 40 == 0 ) {
+	//	ComputeEnvironmentData( mEnvironmentResources.begin()->first, mEnvironmentResources.begin()->second );
+	//}
+
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -175,6 +181,8 @@ void Application::Tick()
 		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", io.DeltaTime * 1000, io.Framerate );
 		//ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
 		//ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
+
+		ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "Shading" );

@@ -209,6 +209,7 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 
 		for ( UINT i = 0; i < kSpecularRoughnessLevelsSH; ++i ) {
 			inCommandList->SetComputeRoot32BitConstant( 0, i, 5 );
+			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV( mSpecularCollector.Get() );
 			inCommandList->Dispatch( resolutionLevels[0], resolutionLevels[1], 1 );
 		}
 
@@ -269,8 +270,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 	// Execute specular solve
 	{
 		CD3DX12_RESOURCE_BARRIER barriers1[2] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS )
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS )
 		};
 		inCommandList->ResourceBarrier( 2, barriers1 );
 
@@ -284,8 +285,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		inCommandList->Dispatch( 1, 1, 1 );
 
 		CD3DX12_RESOURCE_BARRIER barriers2[2] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON )
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE )
 		};
 		inCommandList->ResourceBarrier( 2, barriers2 );
 	}
