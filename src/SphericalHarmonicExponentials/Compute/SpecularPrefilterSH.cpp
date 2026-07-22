@@ -209,7 +209,6 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 
 		for ( UINT i = 0; i < kSpecularRoughnessLevelsSH; ++i ) {
 			inCommandList->SetComputeRoot32BitConstant( 0, i, 5 );
-			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV( mSpecularCollector.Get() );
 			inCommandList->Dispatch( resolutionLevels[0], resolutionLevels[1], 1 );
 		}
 

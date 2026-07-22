@@ -182,7 +182,7 @@ void Application::Tick()
 		//ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
 		//ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
 
-		ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
+		//ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "Shading" );
@@ -797,6 +797,14 @@ void Application::CreateDevice()
 	DWORD dxgiFactoryFlags = 0;
 
 #ifdef _DEBUG
+	{
+		ComPtr<ID3D12Debug> spDebugController0;
+		ComPtr<ID3D12Debug1> spDebugController1;
+		ThrowIfFailed( D3D12GetDebugInterface( IID_PPV_ARGS( &spDebugController0 ) ) );
+		ThrowIfFailed( spDebugController0->QueryInterface( IID_PPV_ARGS( &spDebugController1 ) ) );
+		spDebugController1->SetEnableGPUBasedValidation( true );
+	}
+
 	{
 		// Enable debug layer
 		ComPtr<ID3D12Debug> debugController;

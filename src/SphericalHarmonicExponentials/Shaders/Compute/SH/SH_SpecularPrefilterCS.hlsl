@@ -22,10 +22,13 @@ float2 Hammersley( uint i, uint N )
 
 float3 FibonacciSphere( uint i, uint k )
 {
-    precise float phi = PI * ( 3.0f - sqrt( 5.0f ) );
-    precise float y = 1.0f - 2.0f * i / ( k - 1.0f );
-    precise float r = min( 1, sqrt( 1.0f - y * y ) );
-    precise float theta = phi * i;
+    float phi = PI * ( 3.0f - sqrt( 5.0f ) );
+    float y = 1.0f - 2.0f * i / ( k - 1.0f );
+    float r = sqrt( 1.0f - saturate( y * y ) ); // The saturate prevents NANs caused by non determinism (I'm not joking, identical inputs only cuase NAN sometimes)
+    float theta = phi * i;
+    
+    //if ( i == k - 1 )
+    //    return float3( 0, -1, 0 );
     
     return float3( r * cos( theta ), y, r * sin( theta ) );
 }

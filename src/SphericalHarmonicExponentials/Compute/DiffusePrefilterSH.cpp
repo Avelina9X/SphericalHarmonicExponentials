@@ -112,7 +112,7 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Envi
 {
 	// Execute SH generation
 	{
-		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
 		inCommandList->ResourceBarrier( 1, &barrier1 );
 
 		inCommandList->SetPipelineState( mPrefilterPipelineState.Get() );
@@ -126,12 +126,18 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Envi
 
 		inCommandList->Dispatch( groupCount[0], groupCount[1], 6 );
 
-		CD3DX12_RESOURCE_BARRIER barrier2 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
+		CD3DX12_RESOURCE_BARRIER barrier2 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON );
 		inCommandList->ResourceBarrier( 1, &barrier2 );
 	}
 
 	// Execute SH accumulation
 	{
+		CD3DX12_RESOURCE_BARRIER barriers1[2] = {
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS )
+		};
+		inCommandList->ResourceBarrier( 2, barriers1 );
+
 		inCommandList->SetPipelineState( mAccumulatorPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mAccumulatorRootSignature.Get() );
 
@@ -144,11 +150,10 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Envi
 
 		inCommandList->Dispatch( 1, 1, 1 );
 
-		CD3DX12_RESOURCE_BARRIER barriers[2] = {
+		CD3DX12_RESOURCE_BARRIER barriers2[2] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON )
 		};
-
-		inCommandList->ResourceBarrier( 2, barriers );
+		inCommandList->ResourceBarrier( 2, barriers2 );
 	}
 }

@@ -65,7 +65,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			mEquirectangular.Get(),
 			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
 		);
 		inCommandList->ResourceBarrier( 1, &barrier );
 
@@ -81,6 +81,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		mEquirectangularLoaded = true;
 
 		mCubemapResolution = hdrImage.GetMetadata().width / 4;
+
+		mEquirectangular->SetName( L"Equirectangular Texture" );
 	}
 
 	// Create cubemap resources
@@ -127,6 +129,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			inAllocator.Allocate( &mUnfilteredCubemapFaceHandleCPU[i], &mUnfilteredCubemapFaceHandleGPU[i] );
 			inDevice->CreateShaderResourceView( mUnfilteredCubemap.Get(), &faceDesc, mUnfilteredCubemapFaceHandleCPU[i] );
 		}
+
+		mUnfilteredCubemap->SetName( L"Unfiltered Cubemap" );
 	}
 
 	// Create diffuse cubemap resources
@@ -231,6 +235,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 
 		// Write virtual address
 		mDiffuseHarmonics32Address = mDiffuseHarmonics32->GetGPUVirtualAddress();
+
+		mDiffuseHarmonics32->SetName( L"Diffuse Harmonics32" );
 	}
 
 	// 16 bit diffuse harmonics
@@ -251,6 +257,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 
 		// Write virtual address
 		mDiffuseHarmonics16Address = mDiffuseHarmonics16->GetGPUVirtualAddress();
+
+		mDiffuseHarmonics16->SetName( L"Diffuse Harmonics16" );
 	}
 
 	// 32 bit specular harmonics
@@ -271,6 +279,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 
 		// Write virtual address
 		mSpecularHarmonics32Address = mSpecularHarmonics32->GetGPUVirtualAddress();
+
+		mSpecularHarmonics32->SetName( L"Specular Harmonics32" );
 	}
 
 	// 16 bit specular harmonics
@@ -291,6 +301,8 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 
 		// Write virtual address
 		mSpecularHarmonics16Address = mSpecularHarmonics16->GetGPUVirtualAddress();
+
+		mSpecularHarmonics16->SetName( L"Specular Harmonics16" );
 	}
 }
 

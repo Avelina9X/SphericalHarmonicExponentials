@@ -9,7 +9,7 @@ public:
 	static constexpr UINT kSpecularCollectorResolution = 256;
 	static constexpr UINT kSpecularRoughnessLevelsSH = 4;
 	static constexpr float kMinAlphaLevel = 0.2f;
-	static constexpr UINT kVerticlaGroupsPerDispatch = 1;
+	static constexpr UINT kVerticlaGroupsPerDispatch = 16;
 
 	void CreateResources( ID3D12Device *inDevice, HeapAllocator &inAllocator, D3D_ROOT_SIGNATURE_VERSION inVersion );
 	void Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources );

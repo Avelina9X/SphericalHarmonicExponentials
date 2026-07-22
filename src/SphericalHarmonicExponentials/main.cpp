@@ -49,7 +49,7 @@ int sRun( Application *pApplication, HINSTANCE hInstance, int nCmdShow )
 	windowClass.lpfnWndProc = sWindowProc;
 	windowClass.hInstance = hInstance;
 	windowClass.hCursor = LoadCursor( NULL, IDC_ARROW );
-	windowClass.lpszClassName = L"Hello12Class";
+	windowClass.lpszClassName = L"SphericalHarmonicExponentials";
 	windowClass.hbrBackground = (HBRUSH) ( COLOR_WINDOW + 1 );
 	RegisterClassEx( &windowClass );
 
@@ -61,7 +61,7 @@ int sRun( Application *pApplication, HINSTANCE hInstance, int nCmdShow )
 	// Create the window and store a handle to it
 	HWND gHwnd = CreateWindow(
 		windowClass.lpszClassName,
-		L"Paceholder",
+		L"Spherical Harmonic Exponentials",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -283,6 +283,11 @@ LRESULT sWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 
 				s_fullscreen = !s_fullscreen;
 			}
+			break;
+
+		case WM_SYSCOMMAND:
+			if ((wParam & 0xfff0) == SC_KEYMENU)
+				return 0;    // Disable ALT application menu
 			break;
 
 		case WM_MENUCHAR:
