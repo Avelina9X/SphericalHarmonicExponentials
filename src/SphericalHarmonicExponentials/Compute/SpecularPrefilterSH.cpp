@@ -190,6 +190,8 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 
 void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources )
 {
+	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"SpecularPrefilterSH" );
+
 	// Execute specular collection
 	{
 		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
@@ -289,4 +291,6 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		};
 		inCommandList->ResourceBarrier( 2, barriers2 );
 	}
+
+	PIXEndEvent( inCommandList );
 }

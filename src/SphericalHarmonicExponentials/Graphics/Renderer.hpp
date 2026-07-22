@@ -34,7 +34,7 @@ public:
 	float mCameraYaw = DirectX::XM_PIDIV2;
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
-	bool mUseHalfSH = false;
+	bool mUseHalfSH = true;
 
 protected:
 	// Upload data

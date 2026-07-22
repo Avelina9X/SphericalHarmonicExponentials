@@ -110,6 +110,8 @@ void DiffusePrefilterSH::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNA
 
 void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources )
 {
+	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"DiffusePrefilterSH" );
+
 	// Execute SH generation
 	{
 		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
@@ -156,4 +158,6 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Envi
 		};
 		inCommandList->ResourceBarrier( 2, barriers2 );
 	}
+
+	PIXEndEvent( inCommandList );
 }

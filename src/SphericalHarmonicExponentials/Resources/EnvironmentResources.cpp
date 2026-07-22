@@ -322,6 +322,12 @@ void EnvironmentResources::Destroy()
 	mUploadHeap.Reset();
 	mEquirectangular.Reset();
 	mUnfilteredCubemap.Reset();
+	mDiffuseCubemap.Reset();
+	mSpecularCubemap.Reset();
+	mDiffuseHarmonics32.Reset();
+	mDiffuseHarmonics16.Reset();
+	mSpecularHarmonics32.Reset();
+	mSpecularHarmonics16.Reset();
 
 	mUnfilteredCubemapUavHandleCPU.clear();
 	mUnfilteredCubemapUavHandleGPU.clear();

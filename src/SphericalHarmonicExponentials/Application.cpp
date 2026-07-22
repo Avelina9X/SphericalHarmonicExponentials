@@ -9,6 +9,7 @@
 #include <DirectXColors.h>
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
@@ -44,7 +45,7 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mDiffusePrefilterSH = std::make_unique<DiffusePrefilterSH>();
 	mSpecularPrefilterSH = std::make_unique<SpecularPrefilterSH>();
 
-	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 256 );
+	mRenderer = std::make_unique<Renderer>( kBackBufferCount, 1024 );
 
 	CreateDevice();
 	CreateDeviceResources();
@@ -76,6 +77,8 @@ void Application::OnDestroy()
 	for ( auto &[name, resources] : mEnvironmentResources ) {
 		resources.Destroy();
 	}
+
+	// TODO: reset compute/graphics resources
 
 	for ( UINT i = 0; i < kBackBufferCount; ++i ) {
 		mCommandAllocators[i].Reset();
@@ -130,7 +133,6 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 	ID3D12GraphicsCommandList *commandList = mCommandList.Get();
 
 	WaitForGPU();
-	WaitForGPU();
 
 	mCubemapConverter->Execute( commandList, inResources, mClampValue );
 	mDiffusePrefilterIBL->Execute( commandList, inResources );
@@ -159,39 +161,42 @@ void Application::Tick()
 		}
 	}
 
-	//static int i = 0;
-	//if ( i++ % 40 == 0 ) {
-	//	ComputeEnvironmentData( mEnvironmentResources.begin()->first, mEnvironmentResources.begin()->second );
-	//}
-
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 	ImGuiIO &io = ImGui::GetIO();
 
-	ImGui::SetNextWindowPos( { 32.0f, 32.0f }, ImGuiCond_Once );
-	ImGui::SetNextWindowSize( { 0.0f, ImGui::GetMainViewport()->Size.y - 64 }, ImGuiCond_Once );
+	ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog;
+
+	ImGuiStyle &imStyle = ImGui::GetStyle();
+	if ( ImGui::GetCurrentContext()->HoveredWindow ) {
+		imStyle.Alpha += io.DeltaTime;
+		imStyle.Alpha = std::min( imStyle.Alpha, 1.0f );
+	}
+	else {
+		imStyle.Alpha -= io.DeltaTime;
+		imStyle.Alpha = std::max( imStyle.Alpha, 0.666f );
+	}
+
+	ImGui::SetNextWindowPos( { 0.0f, 0.0f }, ImGuiCond_Once );
 	ImGui::Begin( "Settings", nullptr, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 	{
-
 		float width = std::max( 256.0f, ImGui::GetContentRegionAvail().x );
 
-
 		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", io.DeltaTime * 1000, io.Framerate );
-		//ImGui::Text( "Graphics Fences: %d %d %d", mFenceValues[0], mFenceValues[1], mFenceValues[2] );
-		//ImGui::Text( "Compute Fences:  %d %d %d", mComputeFenceValues[0], mComputeFenceValues[1], mComputeFenceValues[2] );
-
+		ImGui::Checkbox( "Uncapped Framerate", &mUncappedFramerate );
 		//ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "Shading" );
 
-		if ( ImGui::CollapsingHeader( "BRDF" ) ) {
+		if ( ImGui::TreeNodeEx( "BRDF", treeFlags ) ) {
 			ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { width, width } );
 		}
 
 		ImGui::ColorEdit3( "Albedo", &mRenderer->mRendererData.Albedo.x );
+
 		ImGui::SliderFloat( "Roughness", &mRenderer->mRendererData.Roughness, 0.01f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Metallic", &mRenderer->mRendererData.Metallic, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Exposure", &mRenderer->mRendererData.Exposure, -5.0f, 5.0f, "%.0f" );
@@ -199,21 +204,33 @@ void Application::Tick()
 		ImGui::Separator();
 
 		ImGui::Checkbox( "Enable IBL", &mRenderer->mEnableIBL );
+		ImGui::SameLine();
 		ImGui::Checkbox( "Enable SH", &mRenderer->mEnableSH );
 		ImGui::Checkbox( "Half Precision SH", &mRenderer->mUseHalfSH );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
 
+		ImGui::SetNextItemWidth( width / 2 );
 		ImGui::SliderFloat( "Cubemap Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
+
+		ImGui::SetNextItemWidth( width / 2 );
 		ImGui::SliderFloat( "Specular Bias", &mSpecularPrefilterMipBias, 0.0f, 2.0f );
 
 		for ( auto &[name, resources] : mEnvironmentResources ) {
-			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
-				ImGui::PushID( name.c_str() );
-				assert( resources.mEquirectangularLoaded );
+			ImGui::PushID( name.c_str() );
 
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog;
+			bool isUsing = name == mSelectedEnvironment;
+			ImGui::BeginDisabled( !resources.mEnvironmentDataLoaded );
+			if ( ImGui::Checkbox( "##Using", &isUsing ) ) {
+				mSelectedEnvironment = name;
+			}
+			ImGui::EndDisabled();
+
+			ImGui::SameLine();
+
+			if ( ImGui::CollapsingHeader( name.c_str() ) ) {
+				assert( resources.mEquirectangularLoaded );
 
 				if ( ImGui::Button( resources.mEnvironmentDataLoaded ? "Recompute" : "Compute" ) ) {
 					ComputeEnvironmentData( name, resources );
@@ -226,23 +243,23 @@ void Application::Tick()
 					}
 				}
 
-				if ( ImGui::TreeNodeEx( "Equirectangular Map", flags | ImGuiTreeNodeFlags_DefaultOpen ) )
+				if ( ImGui::TreeNodeEx( "Equirectangular Map", treeFlags /* | ImGuiTreeNodeFlags_DefaultOpen */ ) )
 					ImGui::Image( resources.mEquirectangularSrvHandleGPU.ptr, { width, width / 2 } );
 
 				if ( resources.mEnvironmentDataLoaded ) {
 					float cubeRes = width / 4;
 
-					if ( ImGui::TreeNodeEx( "Unfiltered Cubemap", flags ) )
+					if ( ImGui::TreeNodeEx( "Unfiltered Cubemap", treeFlags ) )
 						sDrawCubemap( cubeRes, resources.mUnfilteredCubemapFaceHandleGPU );
 
-					if ( ImGui::TreeNodeEx( "Diffuse Cubemap", flags ) )
+					if ( ImGui::TreeNodeEx( "Diffuse Cubemap", treeFlags ) )
 						sDrawCubemap( cubeRes, resources.mDiffuseCubemapFaceHandleGPU );
 
-					if ( ImGui::TreeNodeEx( "Specular Cubemap", flags ) )
+					if ( ImGui::TreeNodeEx( "Specular Cubemap", treeFlags ) )
 						sDrawCubemap( cubeRes, resources.mSpecularCubemapFaceHandleGPU );
 				}
-				ImGui::PopID();
 			}
+			ImGui::PopID();
 		}
 	}
 	ImGui::End();
@@ -716,8 +733,7 @@ void Application::Present()
 	mCommandQueue->ExecuteCommandLists( 1, CommandListCast( mCommandList.GetAddressOf() ) );
 
 	// Present without vsync
-	HRESULT hr = mSwapChain->Present( 0, DXGI_PRESENT_ALLOW_TEARING );
-	//HRESULT hr = mSwapChain->Present( 2, 0 );
+	HRESULT hr = mUncappedFramerate ? mSwapChain->Present( 0, DXGI_PRESENT_ALLOW_TEARING ) : mSwapChain->Present( 1, 0 );
 
 	// If the device was reset we must completely reinitialize the renderer
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {

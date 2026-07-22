@@ -46,7 +46,6 @@ float4 main( PSInput input ) : SV_TARGET
     
     // IBL
     float3 F = fresnelSchlickRoughness( NdotV, F0, gRoughness );
-    //float3 F = fresnelSchlick( NdotV, F0 );
     float3 kS = F;
     float3 kD = 1.0f - kS;
     kD *= 1.0f - gMetallic;
@@ -55,9 +54,7 @@ float4 main( PSInput input ) : SV_TARGET
     
     float2 brdf = gIntegratedBRDF.SampleLevel( gClampSampler, float2( NdotV, saturate( gRoughness ) ), 0.0f );
     
-    //float3 specular = prefilteredColor * ( F * brdf.x + brdf.y );
-    float3 specular = prefilteredColor * ( F0 * brdf.x + brdf.y );
-    //float3 specular = prefilteredColor * F;
+    float3 specular = prefilteredColor * ( F * brdf.x + brdf.y );
     
     float3 ambient = ( kD * diffuse + specular ) * gAO;
     

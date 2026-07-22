@@ -83,7 +83,7 @@ float4 main( PSInput input ) : SV_TARGET
     const float MAX_REFLECTION_LOD = 4.0;
     float3 prefilteredColor = gSpecularTex.SampleLevel( gSampler, R, gRoughness * MAX_REFLECTION_LOD ).rgb;
     float2 brdf = gIntegratedBRDF.SampleLevel( gClampSampler, float2( NdotV, saturate( gRoughness ) ), 0.0f );
-    float3 specular = prefilteredColor * ( F0 * brdf.x + brdf.y );
+    float3 specular = prefilteredColor * ( F * brdf.x + brdf.y );
     
     float3 ambient = ( kD * diffuse + specular ) * gAO;
 
