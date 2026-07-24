@@ -106,7 +106,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;$(SolutionDir)..\depends\BC7HBC7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
@@ -131,7 +131,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;$(SolutionDir)..\depends\BC7HBC7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
