@@ -167,16 +167,22 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 
 	// Create IBL root signature
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[3] = {};
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[6] = {};
 		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
-		ranges[1].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
-		ranges[2].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[1].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[2].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[3].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[4].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[5].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+		CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
 		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
 		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[2].InitAsDescriptorTable( 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[3].InitAsDescriptorTable( 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[4].InitAsDescriptorTable( 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[5].InitAsDescriptorTable( 1, &ranges[4], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[6].InitAsDescriptorTable( 1, &ranges[5], D3D12_SHADER_VISIBILITY_PIXEL );
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler, anisotropicSampler };
 
@@ -191,16 +197,22 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 
 	// Create SH root signature
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[4] = {};
 		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[1].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[2].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
+		ranges[3].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+		CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
 		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
 		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[2].InitAsShaderResourceView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[3].InitAsShaderResourceView( 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[4].InitAsDescriptorTable( 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[5].InitAsDescriptorTable( 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[6].InitAsDescriptorTable( 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL );
 
-		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler };
+		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler, anisotropicSampler };
 
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 		rootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, _countof( samplers ), samplers, rootSignatureFlags );
@@ -222,6 +234,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
 		// Describe and create the graphics pipeline state object (PSO).
@@ -306,6 +319,10 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 		inCommandList->SetGraphicsRootDescriptorTable( 2, inResources.mDiffuseCubemapSrvHandleGPU );
 		inCommandList->SetGraphicsRootDescriptorTable( 3, inResources.mSpecularCubemapSrvHandleGPU );
 
+		inCommandList->SetGraphicsRootDescriptorTable( 4, mAlbedoSrvHandleGPU );
+		inCommandList->SetGraphicsRootDescriptorTable( 5, mNormalSrvHandleGPU );
+		inCommandList->SetGraphicsRootDescriptorTable( 6, mORMSrvHandleGPU );
+
 		inCommandList->DrawIndexedInstanced( mSphereIndexCount, 1, 0, 0, 0 );
 	}
 
@@ -333,6 +350,10 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
 		inCommandList->SetGraphicsRootDescriptorTable( 1, inBRDF );
 
+		inCommandList->SetGraphicsRootDescriptorTable( 4, mAlbedoSrvHandleGPU );
+		inCommandList->SetGraphicsRootDescriptorTable( 5, mNormalSrvHandleGPU );
+		inCommandList->SetGraphicsRootDescriptorTable( 6, mORMSrvHandleGPU );
+
 		inCommandList->DrawIndexedInstanced( mSphereIndexCount, 1, 0, 0, 0 );
 	}
 }
@@ -349,7 +370,7 @@ void Renderer::ComputeSphere( std::vector<VertexData>& ioVertices, std::vector<U
 
 	for ( UINT i = 0; i <= verticalSegments; ++i ) {
 
-		//const float v = 1.0f - i / static_cast<float>( verticalSegments );
+		const float v = 1.0f - i / static_cast<float>( verticalSegments );
 
 		const float latitude = ( i * DirectX::XM_PI / verticalSegments ) - DirectX::XM_PIDIV2;
 
@@ -358,7 +379,7 @@ void Renderer::ComputeSphere( std::vector<VertexData>& ioVertices, std::vector<U
 
 		for ( UINT j = 0; j <= horizontalSegments; ++j ) {
 
-			//const float u = j / static_cast<float>( horizontalSegments );
+			const float u = j / static_cast<float>( horizontalSegments );
 
 			const float longitude = j * DirectX::XM_2PI / horizontalSegments;
 
@@ -370,7 +391,8 @@ void Renderer::ComputeSphere( std::vector<VertexData>& ioVertices, std::vector<U
 
 			ioVertices.emplace_back(
 				DirectX::XMFLOAT3{ dx * radius, dy * radius, dz * radius },
-				DirectX::XMFLOAT3{ dx, dy, dz }
+				DirectX::XMFLOAT3{ dx, dy, dz },
+				DirectX::XMFLOAT2{ u * 4, v * 2 }
 			);
 		}
 	}

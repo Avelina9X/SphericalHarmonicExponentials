@@ -90,6 +90,18 @@
     <ClCompile Include="Compute\SpecularPrefilterSH.cpp">
       <Filter>Compute</Filter>
     </ClCompile>
+    <ClCompile Include="Resources\TextureResource.cpp">
+      <Filter>Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\TextureParser.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\MaterialParser.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources\MaterialResource.cpp">
+      <Filter>Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -126,6 +138,18 @@
     </ClInclude>
     <ClInclude Include="Compute\SpecularPrefilterSH.hpp">
       <Filter>Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\TextureResource.hpp">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\TextureParser.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\MaterialParser.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\MaterialResource.hpp">
+      <Filter>Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

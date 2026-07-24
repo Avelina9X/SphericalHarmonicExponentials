@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "stone_01_tile_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "stone_01_tile_Normal.dds",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "stone_01_tile_Roughnessstone_01_tile_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": false
+}

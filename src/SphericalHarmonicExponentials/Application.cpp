@@ -34,8 +34,24 @@ void Application::Initialize( HWND inWindow, int inWidth, int inHeight )
 	mEnvironmentParser = std::make_unique<EnvironmentParser>();
 	mEnvironmentParser->ParseEnvironments();
 
+	mTextureParser = std::make_unique<TextureParser>();
+	mTextureParser->ParseTextures();
+
 	for ( const auto &[name, path] : mEnvironmentParser->mEnvironments ) {
 		mEnvironmentResources.emplace( name, path );
+	}
+
+	mTextureResources.emplace( "$DEFAULT_DIFFUSE", "$DEFAULT_DIFFUSE" );
+	mTextureResources.emplace( "$DEFAULT_ORM", "$DEFAULT_ORM" );
+	mTextureResources.emplace( "$DEFAULT_NORMAL", "$DEFAULT_NORMAL" );
+	for ( const auto &[name, path] : mTextureParser->mTextures ) {
+		mTextureResources.emplace( name, path );
+	}
+
+	mMaterialParser = std::make_unique<MaterialParser>();
+	mMaterialParser->ParseMaterials();
+	for ( const auto &[name, path] : mMaterialParser->mMaterials ) {
+		mMaterialResources.emplace( name, path );
 	}
 
 	mIntegratedBRDF = std::make_unique<IntegrateBRDF>();
@@ -128,6 +144,20 @@ static void sDrawCubemap( float inRes, D3D12_GPU_DESCRIPTOR_HANDLE *inHandles )
 
 
 
+void Application::SetMaterialData( const std::string &inName, const MaterialResource &inMaterial )
+{
+	mRenderer->mRendererData.Albedo = inMaterial.mAlbedoStrength;
+	mRenderer->mRendererData.Normal = inMaterial.mNormalStrength;
+	mRenderer->mRendererData.Occlusion = inMaterial.mOcclusionStrength;
+	mRenderer->mRendererData.Roughness = inMaterial.mRoughnessStrength;
+	mRenderer->mRendererData.Metallic = inMaterial.mMetallicStrength;
+	mRenderer->mAlbedoSrvHandleGPU = inMaterial.mAlbedoSrvHandleGPU;
+	mRenderer->mNormalSrvHandleGPU = inMaterial.mNormalSrvHandleGPU;
+	mRenderer->mORMSrvHandleGPU = inMaterial.mORMSrvHandleGPU;
+
+	mSelectedMaterial = inName;
+}
+
 void Application::ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources )
 {
 	ID3D12GraphicsCommandList *commandList = mCommandList.Get();
@@ -195,6 +225,16 @@ void Application::Tick()
 			ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { width, width } );
 		}
 
+		if ( ImGui::BeginCombo( "Material", mSelectedMaterial.c_str() ) ) {
+			for ( const auto &[name, material] : mMaterialResources ) {
+				if ( ImGui::Selectable( name.c_str(), name == mSelectedMaterial ) ) {
+					SetMaterialData( name, material );
+				}
+				if ( name == mSelectedMaterial ) ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
 		ImGui::ColorEdit3( "Albedo", &mRenderer->mRendererData.Albedo.x );
 
 		ImGui::SliderFloat( "Roughness", &mRenderer->mRendererData.Roughness, 0.01f, 1.0f, "%.2f" );
@@ -212,10 +252,20 @@ void Application::Tick()
 		ImGui::SeparatorText( "HDRIs" );
 
 		ImGui::SetNextItemWidth( width / 2 );
-		ImGui::SliderFloat( "Cubemap Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
+		ImGui::SliderFloat( "IBL Cubemap Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
 
 		ImGui::SetNextItemWidth( width / 2 );
-		ImGui::SliderFloat( "Specular Bias", &mSpecularPrefilterMipBias, 0.0f, 2.0f );
+		ImGui::SliderFloat( "IBL Specular Bias", &mSpecularPrefilterMipBias, 0.0f, 2.0f );
+
+		ImGui::Separator();
+
+		int roughnessLevels = mSpecularPrefilterSH->mSpecularRoughnessLevelChoice;
+		ImGui::SetNextItemWidth( width / 2 );
+		ImGui::SliderInt( "SH Alpha Levels", &roughnessLevels, 4, SpecularPrefilterSH::kSpecularRoughnessLevelsSH );
+		mSpecularPrefilterSH->mSpecularRoughnessLevelChoice = roughnessLevels;
+
+		ImGui::SetNextItemWidth( width / 2 );
+		ImGui::DragFloatRange2( "SH Min/Max Alpha", &mSpecularPrefilterSH->mMinAlphaLevel, &mSpecularPrefilterSH->mMaxAlphaLevel, 0.001f, 0.0f, 1.0f, "%.2f", "%.2f", ImGuiSliderFlags_AlwaysClamp );
 
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			ImGui::PushID( name.c_str() );
@@ -412,11 +462,33 @@ void Application::CreateDeviceResources()
 		ImGui_ImplDX12_Init( &init_info );
 	}
 
-	// Load all environments
+	// Load all environments/textures
 	{
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			resources.LoadTexture( mDevice.Get(), mCommandList.Get(), mSrvHeapAllocator, mFenceValues[mBackBufferIndex] );
+			OutputDebugStringA( "Loaded " );
+			OutputDebugStringA( name.c_str() );
+			OutputDebugStringA( "\n" );
 		}
+		OutputDebugStringA( "\n" );
+
+		for ( auto &[name, texture] : mTextureResources ) {
+			texture.LoadTexture( mDevice.Get(), mCommandList.Get(), mSrvHeapAllocator, mFenceValues[mBackBufferIndex] );
+			OutputDebugStringA( "Loaded " );
+			OutputDebugStringA( name.c_str() );
+			OutputDebugStringA( "\n" );
+		}
+		OutputDebugStringA( "\n" );
+
+		for ( auto &[name, material] : mMaterialResources ) {
+			material.LoadMaterial( mTextureResources );
+			OutputDebugStringA( "Loaded " );
+			OutputDebugStringA( name.c_str() );
+			OutputDebugStringA( "\n" );
+		}
+		OutputDebugStringA( "\n" );
+
+		SetMaterialData( "_default", mMaterialResources.at( "_default" ) );
 	}
 
 	// Load Renderer

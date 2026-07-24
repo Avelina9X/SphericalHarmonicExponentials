@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "col_head_2ndfloor_03_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "col_head_2ndfloor_03_Normal.dds",
+    "strength": 0.600000024
+  },
+  "orm": {
+    "texture": "col_head_2ndfloor_03_Roughnesscol_head_2ndfloor_03_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": false
+}

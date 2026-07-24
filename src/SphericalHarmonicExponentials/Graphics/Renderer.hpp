@@ -8,7 +8,9 @@ struct RendererData
 	DirectX::XMVECTOR EyePosition;
 	DirectX::XMMATRIX ViewProj;
 	DirectX::XMFLOAT3 Albedo = { 1.0f, 1.0f, 1.0f };
-	float Roughness = 0.5;
+	float Normal = 1.0f;
+	float Occlusion = 1.0f;
+	float Roughness = 0.5f;
 	float Metallic = 1.0f;
 	float Exposure = 0.0f;
 };
@@ -35,6 +37,10 @@ public:
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
 	bool mUseHalfSH = true;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
+	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;
+	D3D12_GPU_DESCRIPTOR_HANDLE mORMSrvHandleGPU;
 
 protected:
 	// Upload data
@@ -77,6 +83,7 @@ protected:
 	{
 		DirectX::XMFLOAT3 Position;
 		DirectX::XMFLOAT3 Normal;
+		DirectX::XMFLOAT2 UV;
 	};
 
 	void ComputeSphere( std::vector<VertexData> &ioVertices, std::vector<UINT> &ioIndices ) const;

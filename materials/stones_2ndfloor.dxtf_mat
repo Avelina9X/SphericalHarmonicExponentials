@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "stones_2ndfloor_01_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "stones_2ndfloor_01_Normal.dds",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "stones_2ndfloor_01_Roughnessstones_2ndfloor_01_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": false
+}

@@ -2,8 +2,12 @@
 
 #include "Utils/HeapAllocator.hpp"
 #include "Utils/EnvironmentParser.hpp"
+#include "Utils/TextureParser.hpp"
+#include "Utils/MaterialParser.hpp"
 
 #include "Resources/EnvironmentResources.hpp"
+#include "Resources/TextureResource.hpp"
+#include "Resources/MaterialResource.hpp"
 
 #include "Compute/IntegrateBRDF.hpp"
 #include "Compute/CubemapConverter.hpp"
@@ -33,7 +37,7 @@ public:
 		outWidth = 1920;
 		outHeight = 1080;
 	}
-
+	void SetMaterialData( const std::string &inName, const MaterialResource &inMaterial );
 	void ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources );
 
 	void Tick();
@@ -98,6 +102,15 @@ protected:
 
 	// App data
 	std::unique_ptr<EnvironmentParser> mEnvironmentParser;
+	std::map<std::string, EnvironmentResources> mEnvironmentResources;
+	std::string mSelectedEnvironment = "";
+
+	std::unique_ptr<TextureParser> mTextureParser;
+	std::map<std::string, TextureResource> mTextureResources;
+
+	std::unique_ptr<MaterialParser> mMaterialParser;
+	std::map<std::string, MaterialResource> mMaterialResources;
+	std::string mSelectedMaterial = "_default";
 
 	std::unique_ptr<IntegrateBRDF> mIntegratedBRDF;
 	std::unique_ptr<CubemapConverter> mCubemapConverter;
@@ -107,9 +120,6 @@ protected:
 	std::unique_ptr<SpecularPrefilterSH> mSpecularPrefilterSH;
 
 	std::unique_ptr<Renderer> mRenderer;
-
-	std::string mSelectedEnvironment = "";
-	std::map<std::string, EnvironmentResources> mEnvironmentResources;
 
 	float mClampValue = 1000.0f;
 	float mSpecularPrefilterMipBias = 1.0f;

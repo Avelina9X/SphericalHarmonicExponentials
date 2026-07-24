@@ -192,6 +192,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 {
 	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"SpecularPrefilterSH" );
 
+	assert( mSpecularRoughnessLevelChoice <= kSpecularRoughnessLevelsSH );
+
 	// Execute specular collection
 	{
 		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
@@ -200,8 +202,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		inCommandList->SetPipelineState( mPrefilterPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mPrefilterRootSignature.Get() );
 
-		UINT resolutionLevels[3] = { kSpecularCollectorResolution, kSpecularCollectorResolution, kSpecularRoughnessLevelsSH };
-		float minMaxRoughness[2] = { kMinAlphaLevel, 1.0f };
+		UINT resolutionLevels[3] = { kSpecularCollectorResolution, kSpecularCollectorResolution, mSpecularRoughnessLevelChoice };
+		float minMaxRoughness[2] = { mMinAlphaLevel, mMaxAlphaLevel };
 
 		inCommandList->SetComputeRoot32BitConstants( 0, 3, resolutionLevels, 0 );
 		inCommandList->SetComputeRoot32BitConstants( 0, 2, minMaxRoughness, 3 );
@@ -209,7 +211,7 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		inCommandList->SetComputeRootDescriptorTable( 1, inResources.mUnfilteredCubemapSrvHandleGPU );
 		inCommandList->SetComputeRootDescriptorTable( 2, mSpecularCollectorUavHandleGPU );
 
-		for ( UINT i = 0; i < kSpecularRoughnessLevelsSH; ++i ) {
+		for ( UINT i = 0; i < mSpecularRoughnessLevelChoice; ++i ) {
 			inCommandList->SetComputeRoot32BitConstant( 0, i, 5 );
 			inCommandList->Dispatch( resolutionLevels[0], resolutionLevels[1], 1 );
 		}
@@ -226,8 +228,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		inCommandList->SetPipelineState( mAccumulatorPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mAccumulatorRootSignature.Get() );
 
-		UINT resolutionLevels[3] = { kSpecularCollectorResolution, kSpecularCollectorResolution, kSpecularRoughnessLevelsSH };
-		float minMaxRoughness[2] = { kMinAlphaLevel, 1.0f };
+		UINT resolutionLevels[3] = { kSpecularCollectorResolution, kSpecularCollectorResolution, mSpecularRoughnessLevelChoice };
+		float minMaxRoughness[2] = { mMinAlphaLevel, 1.0f };
 
 		inCommandList->SetComputeRoot32BitConstants( 0, 3, resolutionLevels, 0 );
 		inCommandList->SetComputeRoot32BitConstants( 0, 2, minMaxRoughness, 3 );
@@ -236,7 +238,7 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 
 		inCommandList->SetComputeRoot32BitConstant( 0, 1, 7 ); // Set clear
 
-		for ( UINT i = 0; i < kMinAlphaLevel; ++i ) {
+		for ( UINT i = 0; i < mSpecularRoughnessLevelChoice; ++i ) {
 			for ( UINT j = 0; j < kSpecularCollectorResolution; j += kVerticlaGroupsPerDispatch ) {
 
 				inCommandList->SetComputeRootUnorderedAccessView( 2, mSpecularAccumulatorAddress );

@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "dirt_decal_01_dirt_decal_01_mask_gltf_alpha_dirt_decal_Opacity.dds",
+    "strength": [
+      1,
+      1,
+      1,
+      0.350000024
+    ]
+  },
+  "normal": {
+    "texture": "$DEFAULT_NORMAL",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "$DEFAULT_ORM",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 0.0
+  },
+  "blend_mode": "BLEND",
+  "double_sided": false
+}

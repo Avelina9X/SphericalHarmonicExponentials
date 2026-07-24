@@ -106,7 +106,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
@@ -131,7 +131,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\depends\imgui;$(SolutionDir)..\depends\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
@@ -187,8 +187,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Resources\EnvironmentResources.cpp" />
+    <ClCompile Include="Resources\MaterialResource.cpp" />
+    <ClCompile Include="Resources\TextureResource.cpp" />
     <ClCompile Include="Utils\EnvironmentParser.cpp" />
     <ClCompile Include="Utils\HeapAllocator.cpp" />
+    <ClCompile Include="Utils\MaterialParser.cpp" />
+    <ClCompile Include="Utils\TextureParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
@@ -201,9 +205,13 @@
     <ClInclude Include="Graphics\Renderer.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Resources\EnvironmentResources.hpp" />
+    <ClInclude Include="Resources\MaterialResource.hpp" />
+    <ClInclude Include="Resources\TextureResource.hpp" />
     <ClInclude Include="Utils\EnvironmentParser.hpp" />
     <ClInclude Include="Utils\HeapAllocator.hpp" />
+    <ClInclude Include="Utils\MaterialParser.hpp" />
     <ClInclude Include="Utils\ReadData.hpp" />
+    <ClInclude Include="Utils\TextureParser.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

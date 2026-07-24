@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "curtain_fabric_blue_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "curtain_fabric_Normal.dds",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "curtain_fabric_Roughnesscurtain_fabric_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": true
+}

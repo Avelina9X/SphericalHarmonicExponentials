@@ -7,9 +7,12 @@ class SpecularPrefilterSH
 {
 public:
 	static constexpr UINT kSpecularCollectorResolution = 256;
-	static constexpr UINT kSpecularRoughnessLevelsSH = 4;
-	static constexpr float kMinAlphaLevel = 0.2f;
+	static constexpr UINT kSpecularRoughnessLevelsSH = 64;
 	static constexpr UINT kVerticlaGroupsPerDispatch = 16;
+
+	UINT mSpecularRoughnessLevelChoice = 4;
+	float mMinAlphaLevel = 0.2f;
+	float mMaxAlphaLevel = 1.0f;
 
 	void CreateResources( ID3D12Device *inDevice, HeapAllocator &inAllocator, D3D_ROOT_SIGNATURE_VERSION inVersion );
 	void Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources );

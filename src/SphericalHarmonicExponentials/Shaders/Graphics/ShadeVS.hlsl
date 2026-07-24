@@ -1,6 +1,6 @@
 #include "CommonShade.hlsli"
 
-PSInput main( float3 position : POSITION, float3 normal : NORMAL )
+PSInput main( float3 position : POSITION, float3 normal : NORMAL, float2 uv : TEXCOORD )
 {
     PSInput output;
     
@@ -10,6 +10,7 @@ PSInput main( float3 position : POSITION, float3 normal : NORMAL )
     output.PositionPS = PositionPS;
     output.PositionWS = PositionWS.xyz;
     output.NormalWS = normal;
+    output.UV = uv;
     
     return output;
 }

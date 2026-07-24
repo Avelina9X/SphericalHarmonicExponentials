@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "lionhead_01_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "lionhead_01_Normal.dds",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "lionhead_01_Roughnesslionhead_01_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": false
+}

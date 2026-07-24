@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "door_stoneframe_02_BaseColor.dds",
+    "strength": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "normal": {
+    "texture": "door_stoneframe_02_Normal.dds",
+    "strength": 0.5
+  },
+  "orm": {
+    "texture": "door_stoneframe_02_Roughnessdoor_stoneframe_02_Metalness.dds",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 1.0,
+    "metalness_strength": 1.0
+  },
+  "blend_mode": "OPAQUE",
+  "double_sided": false
+}

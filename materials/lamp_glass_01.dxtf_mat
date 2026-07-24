@@ -1,0 +1,23 @@
+{
+  "diffuse": {
+    "texture": "$DEFAULT_DIFFUSE",
+    "strength": [
+      0.609999955,
+      0.609999955,
+      0.609999955,
+      0.1
+    ]
+  },
+  "normal": {
+    "texture": "$DEFAULT_NORMAL",
+    "strength": 1.0
+  },
+  "orm": {
+    "texture": "$DEFAULT_ORM",
+    "occlusion_strength": 1.0,
+    "roughness_strength": 0.1,
+    "metalness_strength": 0.0
+  },
+  "blend_mode": "BLEND",
+  "double_sided": true
+}
