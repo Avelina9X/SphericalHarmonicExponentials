@@ -246,7 +246,12 @@ void Application::Tick()
 		ImGui::Checkbox( "Enable IBL", &mRenderer->mEnableIBL );
 		ImGui::SameLine();
 		ImGui::Checkbox( "Enable SH", &mRenderer->mEnableSH );
-		ImGui::Checkbox( "Half Precision SH", &mRenderer->mUseHalfSH );
+
+		ImGui::RadioButton( "FP32", &mRenderer->mSHPrecision, 0 );
+		ImGui::SameLine();
+		ImGui::RadioButton( "FP16", &mRenderer->mSHPrecision, 1 );
+		ImGui::SameLine();
+		ImGui::RadioButton( "11/11/10", &mRenderer->mSHPrecision, 2 );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );

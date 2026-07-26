@@ -261,6 +261,28 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		mDiffuseHarmonics16->SetName( L"Diffuse Harmonics16" );
 	}
 
+	// 11/11/10 bit diffuse harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = sizeof( UINT ) * 8 + sizeof( float ) * 4; // Packed format
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mDiffuseHarmonics10.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mDiffuseHarmonics10Address = mDiffuseHarmonics10->GetGPUVirtualAddress();
+
+		mDiffuseHarmonics10->SetName( L"Diffuse Harmonics10" );
+	}
+
 	// 32 bit specular harmonics
 	{
 		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
@@ -303,6 +325,28 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		mSpecularHarmonics16Address = mSpecularHarmonics16->GetGPUVirtualAddress();
 
 		mSpecularHarmonics16->SetName( L"Specular Harmonics16" );
+	}
+
+	// 11/11/10 bit specular harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = sizeof( UINT ) * 32 + sizeof( float ) * 4; // Packed format
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS( mSpecularHarmonics10.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mSpecularHarmonics10Address = mSpecularHarmonics10->GetGPUVirtualAddress();
+
+		mSpecularHarmonics10->SetName( L"Specular Harmonics10" );
 	}
 }
 

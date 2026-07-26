@@ -36,7 +36,7 @@ public:
 	float mCameraYaw = DirectX::XM_PIDIV2;
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
-	bool mUseHalfSH = true;
+	int mSHPrecision = 2;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;
@@ -77,6 +77,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mShadingRootSignatureSH;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH32;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH16;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH10;
 
 	// Vertex Data
 	struct VertexData

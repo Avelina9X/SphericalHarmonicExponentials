@@ -261,6 +261,7 @@ void PackPair( float3 a, float3 b, out uint3 out3 )
 float4x3 Unpack4Float3( uint3 first, uint3 second )
 {
     float4x3 ret;
+    
 
     ret[0] = float3(
         f16tof32( first.x ),
@@ -289,7 +290,7 @@ float4x3 Unpack4Float3( uint3 first, uint3 second )
     return ret;
 }
 
-float3 ReconstructSHL2HalfFromSB( SHBasisL2 shBasis, StructuredBuffer<SHCoeffsL2Half> buffer, uint index )
+float3 ReconstructSHL2FromSB( SHBasisL2 shBasis, StructuredBuffer<SHCoeffsL2Half> buffer, uint index )
 {
     float3 acc = mul( shBasis.c_1_4, Unpack4Float3( buffer[index].c_1_8[0], buffer[index].c_1_8[1] ) );
     acc += mul( shBasis.c_5_8, Unpack4Float3( buffer[index].c_1_8[2], buffer[index].c_1_8[3] ) );
@@ -298,7 +299,7 @@ float3 ReconstructSHL2HalfFromSB( SHBasisL2 shBasis, StructuredBuffer<SHCoeffsL2
     return acc;
 }
 
-float3 ReconstructSHL2L4HalfFromSB( SHBasisL4 shBasisP, SHBasisL2 shBasisQ, StructuredBuffer<SHCoeffsL2L4Half> buffer, uint index )
+float3 ReconstructSHL2L4FromSB( SHBasisL4 shBasisP, SHBasisL2 shBasisQ, StructuredBuffer<SHCoeffsL2L4Half> buffer, uint index )
 {    
     float3 acc = mul( shBasisP.c_1_4, Unpack4Float3( buffer[index].p[0], buffer[index].p[1] ) );
     acc += mul( shBasisP.c_5_8, Unpack4Float3( buffer[index].p[2], buffer[index].p[3] ) );
@@ -309,6 +310,95 @@ float3 ReconstructSHL2L4HalfFromSB( SHBasisL4 shBasisP, SHBasisL2 shBasisQ, Stru
     
     acc += mul( shBasisQ.c_1_4, Unpack4Float3( buffer[index].q[0], buffer[index].q[1] ) );
     acc += mul( shBasisQ.c_5_8, Unpack4Float3( buffer[index].q[2], buffer[index].q[3] ) );
+    
+    acc += shBasisP.c_0 * buffer[index].bias;
+
+    return exp( acc );
+}
+
+struct SHCoeffsL2Min10
+{
+    uint4 c[2];
+    float3 bias;
+    float pad;
+};
+
+struct SHCoeffsL2L4Min10
+{
+    uint4 p[6];
+    uint4 q[2];
+    float3 bias;
+    float pad;
+};
+
+uint PackMin10( float3 x )
+{
+    uint res = 0;
+    
+    // Pack blue in 10 bits
+    res |= f32tof16( x.b ) >> 6; // TODO round to nearest
+    res <<= 11;
+    
+    // Pack green in 11 bits
+    res |= f32tof16( x.g ) >> 5; // TODO round to nearest
+    res <<= 11;
+    
+    // Pack red in 11 bits
+    res |= f32tof16( x.r ) >> 5; // TODO round to nearest
+
+    return res;
+}
+
+float3 UnpackMin10( uint x )
+{
+    float3 res;
+    
+    // Unpack red from 11 bits
+    res.r = f16tof32( x << 5 );
+    x >>= 11;
+    
+    // Unpack green from 11 bits
+    res.g = f16tof32( x << 5 );
+    x >>= 11;
+    
+    // Unpack blue from 10 bits
+    res.b = f16tof32( x << 6 );
+    
+    return res;
+}
+
+float4x3 Unpack4Min10( uint4 x )
+{
+    float4x3 ret;
+
+    ret[0] = UnpackMin10( x[0] );
+    ret[1] = UnpackMin10( x[1] );
+    ret[2] = UnpackMin10( x[2] );
+    ret[3] = UnpackMin10( x[3] );
+
+    return ret;
+}
+
+float3 ReconstructSHL2FromSB( SHBasisL2 shBasis, StructuredBuffer<SHCoeffsL2Min10> buffer, uint index )
+{
+    float3 acc = mul( shBasis.c_1_4, Unpack4Min10( buffer[index].c[0] ) );
+    acc += mul( shBasis.c_5_8, Unpack4Min10( buffer[index].c[1] ) );
+    acc += shBasis.c_0 * buffer[index].bias;
+
+    return acc;
+}
+
+float3 ReconstructSHL2L4FromSB( SHBasisL4 shBasisP, SHBasisL2 shBasisQ, StructuredBuffer<SHCoeffsL2L4Min10> buffer, uint index )
+{    
+    float3 acc = mul( shBasisP.c_1_4, Unpack4Min10( buffer[index].p[0] ) );
+    acc += mul( shBasisP.c_5_8, Unpack4Min10( buffer[index].p[1] ) );
+    acc += mul( shBasisP.c_9_12, Unpack4Min10( buffer[index].p[2] ) );
+    acc += mul( shBasisP.c_13_16, Unpack4Min10( buffer[index].p[3] ) );
+    acc += mul( shBasisP.c_17_20, Unpack4Min10( buffer[index].p[4] ) );
+    acc += mul( shBasisP.c_21_24, Unpack4Min10( buffer[index].p[5] ) );
+    
+    acc += mul( shBasisQ.c_1_4, Unpack4Min10( buffer[index].q[0] ) );
+    acc += mul( shBasisQ.c_5_8, Unpack4Min10( buffer[index].q[1] ) );
     
     acc += shBasisP.c_0 * buffer[index].bias;
 

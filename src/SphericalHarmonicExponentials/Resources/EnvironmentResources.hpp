@@ -60,9 +60,15 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDiffuseHarmonics16;
 	D3D12_GPU_VIRTUAL_ADDRESS mDiffuseHarmonics16Address;
 
+	Microsoft::WRL::ComPtr<ID3D12Resource> mDiffuseHarmonics10;
+	D3D12_GPU_VIRTUAL_ADDRESS mDiffuseHarmonics10Address;
+
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularHarmonics32;
 	D3D12_GPU_VIRTUAL_ADDRESS mSpecularHarmonics32Address;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularHarmonics16;
 	D3D12_GPU_VIRTUAL_ADDRESS mSpecularHarmonics16Address;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularHarmonics10;
+	D3D12_GPU_VIRTUAL_ADDRESS mSpecularHarmonics10Address;
 };

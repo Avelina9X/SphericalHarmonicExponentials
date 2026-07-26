@@ -229,6 +229,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		std::vector psBlobIBL = DX::ReadData( L"./IBL_ShadePS.cso" );
 		std::vector psBlobSH32 = DX::ReadData( L"./SH_Shade32PS.cso" );
 		std::vector psBlobSH16 = DX::ReadData( L"./SH_Shade16PS.cso" );
+		std::vector psBlobSH10 = DX::ReadData( L"./SH_Shade10PS.cso" );
 
 		// Define the vertex input layout
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
@@ -263,6 +264,10 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH16.data(), psBlobSH16.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH16.ReleaseAndGetAddressOf() ) ) );
+
+		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH10.data(), psBlobSH10.size() );
+		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH10.ReleaseAndGetAddressOf() ) ) );
 	}
 }
 
@@ -327,7 +332,7 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 	}
 
 	if ( mEnableSH ) {
-		if( mEnableIBL && mEnableSH ) {
+		if ( mEnableIBL && mEnableSH ) {
 			const D3D12_VIEWPORT viewport = { static_cast<float>( mViewportWidth ) / 2, 0, static_cast<float>( mViewportWidth ) / 2, static_cast<float>( mViewportHeight ), D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
 			const D3D12_RECT scissorRect = { static_cast<LONG>( mViewportWidth ) / 2, 0, static_cast<LONG>( mViewportWidth ), static_cast<LONG>( mViewportHeight ) };
 			inCommandList->RSSetViewports( 1, &viewport );
@@ -336,17 +341,25 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 
 		inCommandList->SetGraphicsRootSignature( mShadingRootSignatureSH.Get() );
 
-		if ( mUseHalfSH ) {
-			inCommandList->SetPipelineState( mShadingPipelineStateSH16.Get() );
-			inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics16Address );
-			inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics16Address );
-		}
-		else {
-			inCommandList->SetPipelineState( mShadingPipelineStateSH32.Get() );
-			inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics32Address );
-			inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics32Address );
-		}
+		switch ( mSHPrecision ) {
+			case 0:
+				inCommandList->SetPipelineState( mShadingPipelineStateSH32.Get() );
+				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics32Address );
+				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics32Address );
+				break;
 
+			case 1:
+				inCommandList->SetPipelineState( mShadingPipelineStateSH16.Get() );
+				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics16Address );
+				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics16Address );
+				break;
+
+			case 2:
+				inCommandList->SetPipelineState( mShadingPipelineStateSH10.Get() );
+				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics10Address );
+				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics10Address );
+				break;
+		}
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
 		inCommandList->SetGraphicsRootDescriptorTable( 1, inBRDF );
 

@@ -3,8 +3,8 @@
 #include "AgX.hlsli"
 
 Texture2D<float2> gIntegratedBRDF : register( t0 );
-StructuredBuffer<SHCoeffsL2Half> gDiffuseSH : register( t1 );
-StructuredBuffer<SHCoeffsL2L4Half> gSpecularSH : register( t2 );
+StructuredBuffer<SHCoeffsL2Min10> gDiffuseSH : register( t1 );
+StructuredBuffer<SHCoeffsL2L4Min10> gSpecularSH : register( t2 );
 
 Texture2D<float4> gAbledoTexture : register( t3 );
 Texture2D<float2> gNormalTexture : register( t4 );
