@@ -77,6 +77,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mShadingRootSignatureSH;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH32;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH16;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSHNative16;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH10;
 
 	// Vertex Data

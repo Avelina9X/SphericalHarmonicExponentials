@@ -229,6 +229,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		std::vector psBlobIBL = DX::ReadData( L"./IBL_ShadePS.cso" );
 		std::vector psBlobSH32 = DX::ReadData( L"./SH_Shade32PS.cso" );
 		std::vector psBlobSH16 = DX::ReadData( L"./SH_Shade16PS.cso" );
+		std::vector psBlobSHNative16 = DX::ReadData( L"./SH_ShadeNative16PS.cso" );
 		std::vector psBlobSH10 = DX::ReadData( L"./SH_Shade10PS.cso" );
 
 		// Define the vertex input layout
@@ -264,6 +265,10 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH16.data(), psBlobSH16.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH16.ReleaseAndGetAddressOf() ) ) );
+
+		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHNative16.data(), psBlobSHNative16.size() );
+		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHNative16.ReleaseAndGetAddressOf() ) ) );
 
 		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH10.data(), psBlobSH10.size() );
@@ -355,6 +360,12 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 				break;
 
 			case 2:
+				inCommandList->SetPipelineState( mShadingPipelineStateSHNative16.Get() );
+				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics16Address );
+				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics16Address );
+				break;
+
+			case 3:
 				inCommandList->SetPipelineState( mShadingPipelineStateSH10.Get() );
 				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics10Address );
 				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics10Address );

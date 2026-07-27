@@ -251,7 +251,9 @@ void Application::Tick()
 		ImGui::SameLine();
 		ImGui::RadioButton( "FP16", &mRenderer->mSHPrecision, 1 );
 		ImGui::SameLine();
-		ImGui::RadioButton( "11/11/10", &mRenderer->mSHPrecision, 2 );
+		ImGui::RadioButton( "FP16 (N)", &mRenderer->mSHPrecision, 2 );
+		ImGui::SameLine();
+		ImGui::RadioButton( "FP10", &mRenderer->mSHPrecision, 3 );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
