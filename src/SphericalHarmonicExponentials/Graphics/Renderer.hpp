@@ -34,9 +34,9 @@ public:
 	size_t mViewportHeight = 0;
 	float mCameraPitch = 0.0f;
 	float mCameraYaw = DirectX::XM_PIDIV2;
-	bool mEnableIBL = false;
+	bool mEnableIBL = true;
 	bool mEnableSH = true;
-	int mSHPrecision = 5;
+	int mSHPrecision = 0;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;

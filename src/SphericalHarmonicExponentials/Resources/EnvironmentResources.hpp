@@ -29,6 +29,7 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE mEquirectangularSrvHandleGPU;
 
 	bool mEnvironmentDataLoaded = false;
+	bool mCreatedThisFrame = false;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mUnfilteredCubemap;
 	D3D12_CPU_DESCRIPTOR_HANDLE mUnfilteredCubemapSrvHandleCPU;

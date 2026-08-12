@@ -22,7 +22,7 @@ void DiffusePrefilterSH::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNA
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&arrayBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mHarmonicsArray.ReleaseAndGetAddressOf() )
 		) );
@@ -136,8 +136,10 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 
 	// Execute SH generation
 	{
-		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
-		inCommandList->ResourceBarrier( 1, &barrier1 );
+		//CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
+		//inCommandList->ResourceBarrier( 1, &barrier1 );
+		// 
+		// Barrier not required; we previously transition to non PS resource in the diffuse IBL shader
 
 		inCommandList->SetPipelineState( mPrefilterPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mPrefilterRootSignature.Get() );
@@ -157,10 +159,10 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 	// Execute SH accumulation
 	{
 		CD3DX12_RESOURCE_BARRIER barriers1[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			//CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion!
 			CD3DX12_RESOURCE_BARRIER::Transition( mHarmonicsArray.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ),
 		};
 		inCommandList->ResourceBarrier( _countof( barriers1 ), barriers1 );
@@ -177,28 +179,22 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 		inCommandList->SetComputeRootUnorderedAccessView( 4, inResources.mDiffuseHarmonics10Address );
 		inCommandList->SetComputeRootUnorderedAccessView( 5, mDiffuseTempCBVAddress );
 
-
-		CD3DX12_RESOURCE_BARRIER panic = CD3DX12_RESOURCE_BARRIER::UAV( nullptr );
-		inCommandList->ResourceBarrier( 1, &panic );
-
 		inCommandList->Dispatch( 1, 1, 1 );
 
-		inCommandList->ResourceBarrier( 1, &panic );
-
 		CD3DX12_RESOURCE_BARRIER barriers2[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
 			CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE ),
-			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ), Not needed, auto promotion
+			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ), // Not needed, auto promotion
 		};
 		inCommandList->ResourceBarrier( _countof( barriers2 ), barriers2 );
 
 		inCommandList->CopyBufferRegion( inResources.mDiffuseHarmonicsCBV16.Get(), 0, mDiffuseTempCBV.Get(), 0, 256 );
 
 		CD3DX12_RESOURCE_BARRIER barriers3[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ), // Not needed, will decay at end of frame
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
 		};
 		inCommandList->ResourceBarrier( _countof( barriers3 ), barriers3 );
 	}

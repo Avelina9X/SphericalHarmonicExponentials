@@ -35,7 +35,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mEquirectangular.ReleaseAndGetAddressOf() )
 		) );
@@ -109,7 +109,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // Start as UAV
 			nullptr,
 			IID_PPV_ARGS( mUnfilteredCubemap.ReleaseAndGetAddressOf() )
 		) );
@@ -151,7 +151,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // Start as UAV
 			nullptr,
 			IID_PPV_ARGS( mDiffuseCubemap.ReleaseAndGetAddressOf() )
 		) );
@@ -193,7 +193,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // Start as UAV
 			nullptr,
 			IID_PPV_ARGS( mSpecularCubemap.ReleaseAndGetAddressOf() )
 		) );
@@ -228,7 +228,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mDiffuseHarmonics32.ReleaseAndGetAddressOf() )
 		) );
@@ -250,7 +250,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mDiffuseHarmonics16.ReleaseAndGetAddressOf() )
 		) );
@@ -272,7 +272,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mDiffuseHarmonics10.ReleaseAndGetAddressOf() )
 		) );
@@ -294,7 +294,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mSpecularHarmonics32.ReleaseAndGetAddressOf() )
 		) );
@@ -316,7 +316,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mSpecularHarmonics16.ReleaseAndGetAddressOf() )
 		) );
@@ -338,7 +338,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mSpecularHarmonics10.ReleaseAndGetAddressOf() )
 		) );
@@ -360,7 +360,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mDiffuseHarmonicsCBV16.ReleaseAndGetAddressOf() )
 		) );
@@ -389,7 +389,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&coeffBufferDesc,
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS( mSpecularHarmonicsCBV16.ReleaseAndGetAddressOf() )
 		) );
@@ -419,6 +419,7 @@ void EnvironmentResources::Destroy()
 {
 	mEquirectangularLoaded = false;
 	mEnvironmentDataLoaded = false;
+	mCreatedThisFrame = false;
 	mEquirectangularFenceValue = 0;
 
 	mUploadHeap.Reset();

@@ -33,7 +33,7 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_COMMON,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 			nullptr,
 			IID_PPV_ARGS( mSpecularCollector.ReleaseAndGetAddressOf() )
 		) );
@@ -227,8 +227,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 
 	// Execute specular collection
 	{
-		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
-		inCommandList->ResourceBarrier( 1, &barrier1 );
+		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		inCommandList->ResourceBarrier( 1, &barrier1 ); // Not needed, auto promotion
 
 		inCommandList->SetPipelineState( mPrefilterPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mPrefilterRootSignature.Get() );
@@ -247,14 +247,14 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 			inCommandList->Dispatch( resolutionLevels[0], resolutionLevels[1], 1 );
 		}
 
-		CD3DX12_RESOURCE_BARRIER barrier2 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
+		CD3DX12_RESOURCE_BARRIER barrier2 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularCollector.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
 		inCommandList->ResourceBarrier( 1, &barrier2 );
 	}
 
 	// Execute specular row accumulation
 	{
-		CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularAccumulator.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
-		inCommandList->ResourceBarrier( 1, &barrier1 );
+		//CD3DX12_RESOURCE_BARRIER barrier1 = CD3DX12_RESOURCE_BARRIER::Transition( mSpecularAccumulator.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		//inCommandList->ResourceBarrier( 1, &barrier1 );
 
 		inCommandList->SetPipelineState( mAccumulatorPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mAccumulatorRootSignature.Get() );
@@ -304,10 +304,10 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 	// Execute specular solve
 	{
 		CD3DX12_RESOURCE_BARRIER barriers1[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
+			//CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion
 		};
 		inCommandList->ResourceBarrier( _countof( barriers1 ), barriers1 );
 
@@ -320,12 +320,7 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 		inCommandList->SetComputeRootUnorderedAccessView( 3, inResources.mSpecularHarmonics10Address );
 		inCommandList->SetComputeRootUnorderedAccessView( 4, mSpecularTempCBVAddress );
 
-		CD3DX12_RESOURCE_BARRIER panic = CD3DX12_RESOURCE_BARRIER::UAV( nullptr );
-		inCommandList->ResourceBarrier( 1, &panic );
-
 		inCommandList->Dispatch( 1, 1, 1 );
-
-		inCommandList->ResourceBarrier( 1, &panic );
 
 		CD3DX12_RESOURCE_BARRIER barriers2[] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
@@ -339,8 +334,8 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 		inCommandList->CopyBufferRegion( inResources.mSpecularHarmonicsCBV16.Get(), 0, mSpecularTempCBV.Get(), 0, 256 );
 
 		CD3DX12_RESOURCE_BARRIER barriers3[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ), // Not needed, will decay at end of frame
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
 		};
 		inCommandList->ResourceBarrier( _countof( barriers3 ), barriers3 );
 	}

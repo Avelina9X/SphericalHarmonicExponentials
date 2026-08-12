@@ -96,7 +96,7 @@ void CubemapConverter::Execute( ID3D12GraphicsCommandList7 *inCommandList, Envir
 
 	// If previously created, transition back to UAV
 	if ( inResources.mEnvironmentDataLoaded ) {
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
 		inCommandList->ResourceBarrier( 1, &barrier );
 	}
 
@@ -140,7 +140,7 @@ void CubemapConverter::Execute( ID3D12GraphicsCommandList7 *inCommandList, Envir
 			inCommandList->ResourceBarrier( 1, &barrier );
 		}
 
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mUnfilteredCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE );
 		inCommandList->ResourceBarrier( 1, &barrier );
 	}
 

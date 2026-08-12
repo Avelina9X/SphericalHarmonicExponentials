@@ -77,7 +77,8 @@ void DiffusePrefilterIBL::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 		inCommandList->Dispatch( groupCount[0], groupCount[1], 1);
 	}
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
+	// After this shader, we will consume it to generate spherical harmonics, therefore transition to non pixel shader resource
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseCubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE );
 	inCommandList->ResourceBarrier( 1, &barrier );
 
 	PIXEndEvent( inCommandList );

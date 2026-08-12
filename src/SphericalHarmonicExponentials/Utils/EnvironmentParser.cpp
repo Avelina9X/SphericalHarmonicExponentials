@@ -51,6 +51,7 @@ void EnvironmentParser::ParseEnvironments()
 			if ( i.is_regular_file() ) {
 				if ( i.path().extension() == ".hdr" || i.path().extension() == ".HDR" ) {
 					mEnvironments[i.path().filename().string()] = i.path();
+					//return;
 				}
 			}
 		}

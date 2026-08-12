@@ -23,7 +23,7 @@ void IntegrateBRDF::CreateResources( ID3D12Device *inDevice, HeapAllocator &inAl
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // Texture created as UAV, only accessed once as UAV, then transitioned to PS
 			nullptr,
 			IID_PPV_ARGS( mResource.ReleaseAndGetAddressOf() )
 		) );
@@ -41,7 +41,7 @@ void IntegrateBRDF::CreateResources( ID3D12Device *inDevice, HeapAllocator &inAl
 
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE ); // TODO: check volatility
+		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE );
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 		rootParameters[0].InitAsConstants( 2, 0 );
@@ -92,6 +92,6 @@ void IntegrateBRDF::Execute( ID3D12GraphicsCommandList7 *inCommandList )
 
 	inCommandList->Dispatch( kIntegratedBRDFResolution, kIntegratedBRDFResolution, 1 );
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( mResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON );
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition( mResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
 	inCommandList->ResourceBarrier( 1, &barrier );
 }

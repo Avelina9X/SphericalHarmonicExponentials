@@ -171,6 +171,7 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 	mSpecularPrefilterSH->Execute( commandList, inResources );
 
 	inResources.mEnvironmentDataLoaded = true;
+	inResources.mCreatedThisFrame = true;
 	mSelectedEnvironment = inName;
 }
 
