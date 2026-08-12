@@ -329,7 +329,7 @@ void Application::Tick()
 	ImGui::Render();
 
 	// Auto 
-	if ( false ) {
+	if ( true ) {
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			if ( !resources.mEnvironmentDataLoaded ) {
 				ComputeEnvironmentData( name, resources );

@@ -22,7 +22,7 @@ void main( uint3 gtid : SV_GroupThreadID )
     
     const uint rowByte = 36 * 4 * row;
 
-    // STEP 1: Cooperatively load data from global GPU buffers into shared memory
+    // STEP 1: load data from global GPU buffers into shared memory
     for ( int col = 0; col < MATRIX_SIZE; ++col )
     {
         const uint colByte = col * 4;
@@ -98,7 +98,7 @@ void main( uint3 gtid : SV_GroupThreadID )
         }
     }
     
-    // STEP 5: Write the final solution vector x back to global VRAM
+    // STEP 5: Write the final solution vector
     if ( gtid.x == 0 ) {
         // 32 bit
         {
