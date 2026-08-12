@@ -335,10 +335,8 @@ void Renderer::CommitData( UINT inFrameIndex )
 {
 	mFrameIndex = inFrameIndex;
 
-	float zoom = 0.4f;
-
 	DirectX::XMVECTOR cameraPos = DirectX::XMVectorSet( std::sin( mCameraYaw ) * std::cos( mCameraPitch ), std::sin( mCameraPitch ), std::cos( mCameraYaw ) * std::cos( mCameraPitch ), 0.0f );
-	cameraPos = DirectX::XMVectorScale( DirectX::XMVector3Normalize( cameraPos ), std::lerp( 2.0f, 1.1f, zoom ) );
+	cameraPos = DirectX::XMVectorScale( DirectX::XMVector3Normalize( cameraPos ), std::lerp( 2.0f, 1.1f, mZoomLevel ) );
 
 	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtRH( cameraPos, DirectX::g_XMZero, DirectX::XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ) );
 

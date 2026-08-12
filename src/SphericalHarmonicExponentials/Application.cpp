@@ -218,6 +218,8 @@ void Application::Tick()
 
 		if ( ImGui::Button( "Wait For GPU" ) ) WaitForGPU();
 
+		ImGui::SliderFloat( "Zoom Level", &mRenderer->mZoomLevel, 0.0f, 1.0f, "%.2f" );
+
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "Shading" );
 

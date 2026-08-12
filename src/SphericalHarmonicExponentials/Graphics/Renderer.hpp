@@ -37,6 +37,7 @@ public:
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
 	int mSHPrecision = 5;
+	float mZoomLevel = 0;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;
