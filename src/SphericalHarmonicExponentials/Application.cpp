@@ -909,10 +909,11 @@ void Application::CreateDevice()
 #ifdef _DEBUG
 	{
 		ComPtr<ID3D12Debug> spDebugController0;
-		ComPtr<ID3D12Debug1> spDebugController1;
+		ComPtr<ID3D12Debug6> spDebugController1;
 		ThrowIfFailed( D3D12GetDebugInterface( IID_PPV_ARGS( &spDebugController0 ) ) );
 		ThrowIfFailed( spDebugController0->QueryInterface( IID_PPV_ARGS( &spDebugController1 ) ) );
 		spDebugController1->SetEnableGPUBasedValidation( true );
+		spDebugController1->SetForceLegacyBarrierValidation( false );
 	}
 
 	{

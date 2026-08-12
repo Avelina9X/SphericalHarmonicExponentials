@@ -424,7 +424,7 @@ void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResou
 				break;
 
 			case 5:
-				if ( true ) {
+				if ( false ) {
 					D3D12_RESOURCE_BARRIER barrier = {};
 					barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 					barrier.Transition.pResource = inResources.mDiffuseHarmonicsCBV16.Get();
@@ -435,6 +435,17 @@ void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResou
 
 					barrier.Transition.pResource = inResources.mSpecularHarmonicsCBV16.Get();
 					inCommandList->ResourceBarrier( 1, &barrier );
+				}
+				if ( false ) {
+					auto specBarrier = CD3DX12_BUFFER_BARRIER();
+					auto barrierGroup = CD3DX12_BARRIER_GROUP( 1, &specBarrier );
+					specBarrier.SyncBefore = D3D12_BARRIER_SYNC_ALL_SHADING;
+					specBarrier.SyncAfter = D3D12_BARRIER_SYNC_ALL_SHADING;
+					specBarrier.AccessBefore = D3D12_BARRIER_ACCESS_COMMON;
+					specBarrier.AccessAfter = D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
+					specBarrier.Size = ULLONG_MAX;
+					specBarrier.pResource = inResources.mSpecularHarmonicsCBV16.Get();
+					inCommandList->Barrier( 1, &barrierGroup );
 				}
 
 				inCommandList->SetPipelineState( mShadingPipelineStateSHCBVNative16.Get() );
