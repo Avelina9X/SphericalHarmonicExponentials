@@ -257,6 +257,8 @@ void Application::Tick()
 		ImGui::SameLine();
 		ImGui::RadioButton( "FP10", &mRenderer->mSHPrecision, 3 );
 
+		ImGui::RadioButton( "FP16 (CBV)", &mRenderer->mSHPrecision, 4 );
+		ImGui::SameLine();
 		ImGui::RadioButton( "FP16 (N, CBV)", &mRenderer->mSHPrecision, 5 );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );

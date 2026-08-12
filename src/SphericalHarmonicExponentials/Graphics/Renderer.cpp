@@ -268,7 +268,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		std::vector psBlobSHNative16 = DX::ReadData( L"./SH_ShadeNative16PS.cso" );
 		std::vector psBlobSH10 = DX::ReadData( L"./SH_Shade10PS.cso" );
 
-		//std::vector psBlobSHCBV16 = DX::ReadData( L"./SH_ShadeCBV16PS.cso" );
+		std::vector psBlobSHCBV16 = DX::ReadData( L"./SH_ShadeCBV16PS.cso" );
 		std::vector psBlobSHCBVNative16 = DX::ReadData( L"./SH_ShadeCBVNative16PS.cso" );
 
 		// Define the vertex input layout
@@ -313,9 +313,9 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH10.data(), psBlobSH10.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH10.ReleaseAndGetAddressOf() ) ) );
 
-		//psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
-		//psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBV16.data(), psBlobSHCBV16.size() );
-		//ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBV16.ReleaseAndGetAddressOf() ) ) );
+		psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBV16.data(), psBlobSHCBV16.size() );
+		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBV16.ReleaseAndGetAddressOf() ) ) );
 
 		psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBVNative16.data(), psBlobSHCBVNative16.size() );
@@ -421,6 +421,23 @@ void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResou
 				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics10Address );
 				break;
 
+			case 4:
+				if ( !inResources.mCreatedThisFrame ) {
+					CD3DX12_RESOURCE_BARRIER barriers[] = {
+						CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
+						CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
+					};
+					inCommandList->ResourceBarrier( _countof( barriers ), barriers );
+				}
+				else {
+					inResources.mCreatedThisFrame = false;
+				}
+
+				inCommandList->SetPipelineState( mShadingPipelineStateSHCBV16.Get() );
+				inCommandList->SetGraphicsRootConstantBufferView( 2, inResources.mDiffuseHarmonicsCBV16Address );
+				inCommandList->SetGraphicsRootConstantBufferView( 3, inResources.mSpecularHarmonicsCBV16Address );
+				break;
+
 			case 5:
 				if ( !inResources.mCreatedThisFrame ) {
 					CD3DX12_RESOURCE_BARRIER barriers[] = {
@@ -436,8 +453,6 @@ void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResou
 				inCommandList->SetPipelineState( mShadingPipelineStateSHCBVNative16.Get() );
 				inCommandList->SetGraphicsRootConstantBufferView( 2, inResources.mDiffuseHarmonicsCBV16Address );
 				inCommandList->SetGraphicsRootConstantBufferView( 3, inResources.mSpecularHarmonicsCBV16Address );
-				//inCommandList->SetGraphicsRootDescriptorTable( 2, inResources.mDiffuseHarmonicsCBV16HandleGPU );
-				//inCommandList->SetGraphicsRootDescriptorTable( 3, inResources.mSpecularHarmonicsCBV16HandleGPU );
 				break;
 		}
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
@@ -451,7 +466,7 @@ void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResou
 	}
 }
 
-void Renderer::ComputeSphere( std::vector<VertexData>& ioVertices, std::vector<UINT>& ioIndices ) const
+void Renderer::ComputeSphere( std::vector<VertexData> &ioVertices, std::vector<UINT> &ioIndices ) const
 {
 	ioVertices.clear();
 	ioIndices.clear();
