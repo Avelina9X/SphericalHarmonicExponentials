@@ -332,34 +332,17 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
 			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE ),
-			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ), // Not needed, auto promotion
 		};
 		inCommandList->ResourceBarrier( _countof( barriers2 ), barriers2 );
-
-		auto cbvBarrier = CD3DX12_BUFFER_BARRIER();
-		auto barrierGroup = CD3DX12_BARRIER_GROUP( 1, &cbvBarrier );
-		cbvBarrier.SyncBefore = D3D12_BARRIER_SYNC_ALL;
-		cbvBarrier.SyncAfter = D3D12_BARRIER_SYNC_COPY;
-		cbvBarrier.AccessBefore = D3D12_BARRIER_ACCESS_COMMON;
-		cbvBarrier.AccessAfter = D3D12_BARRIER_ACCESS_COPY_DEST;
-		cbvBarrier.Size = ULLONG_MAX;
-		cbvBarrier.pResource = inResources.mSpecularHarmonicsCBV16.Get();
-		inCommandList->Barrier( 1, &barrierGroup );
 
 		inCommandList->CopyBufferRegion( inResources.mSpecularHarmonicsCBV16.Get(), 0, mSpecularTempCBV.Get(), 0, 256 );
 
 		CD3DX12_RESOURCE_BARRIER barriers3[] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ),
-			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
-			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
 		};
 		inCommandList->ResourceBarrier( _countof( barriers3 ), barriers3 );
-
-		cbvBarrier.SyncBefore = D3D12_BARRIER_SYNC_COPY;
-		cbvBarrier.SyncAfter = D3D12_BARRIER_SYNC_ALL_SHADING; // TODO: may not be needed
-		cbvBarrier.AccessBefore = D3D12_BARRIER_ACCESS_COPY_DEST;
-		cbvBarrier.AccessAfter = D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
-		inCommandList->Barrier( 1, &barrierGroup );
 	}
 
 	PIXEndEvent( inCommandList );

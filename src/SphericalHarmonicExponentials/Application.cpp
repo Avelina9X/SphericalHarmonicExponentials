@@ -913,7 +913,7 @@ void Application::CreateDevice()
 		ThrowIfFailed( D3D12GetDebugInterface( IID_PPV_ARGS( &spDebugController0 ) ) );
 		ThrowIfFailed( spDebugController0->QueryInterface( IID_PPV_ARGS( &spDebugController1 ) ) );
 		spDebugController1->SetEnableGPUBasedValidation( true );
-		spDebugController1->SetForceLegacyBarrierValidation( false );
+		spDebugController1->SetForceLegacyBarrierValidation( true );
 	}
 
 	{

@@ -190,7 +190,7 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON ),
 			CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ), Not needed, auto promotion
 		};
 		inCommandList->ResourceBarrier( _countof( barriers2 ), barriers2 );
 
@@ -199,7 +199,6 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 		CD3DX12_RESOURCE_BARRIER barriers3[] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
-			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
 		};
 		inCommandList->ResourceBarrier( _countof( barriers3 ), barriers3 );
 	}
