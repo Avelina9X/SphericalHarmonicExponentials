@@ -257,11 +257,15 @@ void PackPair( float3 a, float3 b, out uint3 out3 )
     out3[1] = packHalf2( a.z, b.x );
     out3[2] = packHalf2( b.y, b.z );
 }
+void PackHalf4( float4 x, out uint2 out2 )
+{
+    out2[0] = packHalf2( x.x, x.y );
+    out2[1] = packHalf2( x.z, x.w );
+}
 
 float4x3 Unpack4Float3( uint3 first, uint3 second )
 {
     float4x3 ret;
-    
 
     ret[0] = float3(
         f16tof32( first.x ),
@@ -404,3 +408,59 @@ float3 ReconstructSHL2L4FromSB( SHBasisL4 shBasisP, SHBasisL2 shBasisQ, Structur
 
     return exp( acc );
 }
+
+struct SHCoeffsL2HalfCBV
+{
+    uint2 c_1_4_r;
+    uint2 c_1_4_g;
+    uint2 c_1_4_b;
+    
+    uint2 c_5_8_r;
+    uint2 c_5_8_g;
+    uint2 c_5_8_b;
+    
+    float3 c_0;
+    float pad;
+    
+    uint4 _pad[12];
+};
+
+struct SHCoeffsL2L4HalfCBV
+{
+    uint2 p_1_4_r;
+    uint2 p_1_4_g;
+    uint2 p_1_4_b;
+    
+    uint2 p_5_8_r;
+    uint2 p_5_8_g;
+    uint2 p_5_8_b;
+    
+    uint2 p_9_12_r;
+    uint2 p_9_12_g;
+    uint2 p_9_12_b;
+    
+    uint2 p_13_16_r;
+    uint2 p_13_16_g;
+    uint2 p_13_16_b;
+    
+    uint2 p_17_20_r;
+    uint2 p_17_20_g;
+    uint2 p_17_20_b;
+    
+    uint2 p_21_24_r;
+    uint2 p_21_24_g;
+    uint2 p_21_24_b;
+    
+    uint2 q_1_4_r;
+    uint2 q_1_4_g;
+    uint2 q_1_4_b;
+    
+    uint2 q_5_8_r;
+    uint2 q_5_8_g;
+    uint2 q_5_8_b;
+    
+    float3 bias;
+    float pad;
+    
+    uint4 _pad[3];
+};

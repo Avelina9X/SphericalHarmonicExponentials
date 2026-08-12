@@ -53,7 +53,7 @@ void DiffusePrefilterIBL::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGN
 	}
 }
 
-void DiffusePrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources )
+void DiffusePrefilterIBL::Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources )
 {
 	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"DiffusePrefilterIBL" );
 

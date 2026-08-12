@@ -88,7 +88,7 @@ void CubemapConverter::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNATU
 	}
 }
 
-void CubemapConverter::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, float inClampValue )
+void CubemapConverter::Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, float inClampValue )
 {
 	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"CubemapConverter" );
 

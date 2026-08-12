@@ -9,6 +9,7 @@ ByteAddressBuffer gMatrixAtA_Atb : register( t0 );
 RWStructuredBuffer<SHCoeffsL2L4> gHarmonics32 : register( u0 );
 RWStructuredBuffer<SHCoeffsL2L4Half> gHarmonics16 : register( u1 );
 RWStructuredBuffer<SHCoeffsL2L4Min10> gHarmonics10 : register( u2 );
+RWStructuredBuffer<SHCoeffsL2L4HalfCBV> gHarmonics16CBV : register( u3 );
 
 groupshared float A_shared[MATRIX_SIZE][MATRIX_SIZE];
 groupshared float3 b_shared[MATRIX_SIZE];
@@ -139,5 +140,48 @@ void main( uint3 gtid : SV_GroupThreadID )
             
             gHarmonics10[0].bias = b_shared[32];
         }
+        
+        // Pack row major F16 CBV
+        uint k = 0;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_1_4_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_1_4_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_1_4_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_5_8_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_5_8_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_5_8_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_9_12_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_9_12_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_9_12_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_13_16_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_13_16_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_13_16_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_17_20_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_17_20_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_17_20_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].p_21_24_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].p_21_24_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].p_21_24_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].q_1_4_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].q_1_4_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].q_1_4_b );
+        
+        k += 4;
+        PackHalf4( float4( b_shared[k + 0].r, b_shared[k + 1].r, b_shared[k + 2].r, b_shared[k + 3].r ), gHarmonics16CBV[0].q_5_8_r );
+        PackHalf4( float4( b_shared[k + 0].g, b_shared[k + 1].g, b_shared[k + 2].g, b_shared[k + 3].g ), gHarmonics16CBV[0].q_5_8_g );
+        PackHalf4( float4( b_shared[k + 0].b, b_shared[k + 1].b, b_shared[k + 2].b, b_shared[k + 3].b ), gHarmonics16CBV[0].q_5_8_b );
+        
+        gHarmonics16CBV[0].bias = b_shared[32];
     }
 }

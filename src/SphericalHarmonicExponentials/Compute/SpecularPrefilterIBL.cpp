@@ -53,7 +53,7 @@ void SpecularPrefilterIBL::CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIG
 	}
 }
 
-void SpecularPrefilterIBL::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, float inMipBias )
+void SpecularPrefilterIBL::Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, float inMipBias )
 {
 	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"SpecularPrefilterIBL" );
 

@@ -15,7 +15,7 @@ public:
 	float mMaxAlphaLevel = 1.0f;
 
 	void CreateResources( ID3D12Device *inDevice, HeapAllocator &inAllocator, D3D_ROOT_SIGNATURE_VERSION inVersion );
-	void Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources );
+	void Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources );
 	void Destroy();
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularCollector;
@@ -27,6 +27,9 @@ public:
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularAccumulator;
 	D3D12_GPU_VIRTUAL_ADDRESS mSpecularAccumulatorAddress;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularTempCBV;
+	D3D12_GPU_VIRTUAL_ADDRESS mSpecularTempCBVAddress;
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mPrefilterRootSignature;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mPrefilterPipelineState;

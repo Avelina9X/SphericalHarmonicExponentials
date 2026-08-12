@@ -9,6 +9,7 @@ StructuredBuffer<SHCoeffsL2> gInputCoeffs : register( t0 );
 RWStructuredBuffer<SHCoeffsL2> gAccuCoeffs : register( u0 );
 RWStructuredBuffer<SHCoeffsL2Half> gAccuCoeffsHalf : register( u1 );
 RWStructuredBuffer<SHCoeffsL2Min10> gAccuCoeffsMin10 : register( u2 );
+RWStructuredBuffer<SHCoeffsL2HalfCBV> gAccuCoeffsHalfCBV : register( u3 );
 
 [numthreads( 1, 1, 1 )]
 void main(
@@ -45,5 +46,16 @@ void main(
         gAccuCoeffsMin10[0].c[1][j % 4] = PackMin10( accumulator.c_5_8[j] );
     }
     gAccuCoeffsMin10[0].bias = accumulator.c_0;
-
+    
+    
+    // Pack row major F16 CBV
+    PackHalf4( float4( accumulator.c_1_4[0].r, accumulator.c_1_4[1].r, accumulator.c_1_4[2].r, accumulator.c_1_4[3].r ), gAccuCoeffsHalfCBV[0].c_1_4_r );
+    PackHalf4( float4( accumulator.c_1_4[0].g, accumulator.c_1_4[1].g, accumulator.c_1_4[2].g, accumulator.c_1_4[3].g ), gAccuCoeffsHalfCBV[0].c_1_4_g );
+    PackHalf4( float4( accumulator.c_1_4[0].b, accumulator.c_1_4[1].b, accumulator.c_1_4[2].b, accumulator.c_1_4[3].b ), gAccuCoeffsHalfCBV[0].c_1_4_b );
+    
+    PackHalf4( float4( accumulator.c_5_8[0].r, accumulator.c_5_8[1].r, accumulator.c_5_8[2].r, accumulator.c_5_8[3].r ), gAccuCoeffsHalfCBV[0].c_5_8_r );
+    PackHalf4( float4( accumulator.c_5_8[0].g, accumulator.c_5_8[1].g, accumulator.c_5_8[2].g, accumulator.c_5_8[3].g ), gAccuCoeffsHalfCBV[0].c_5_8_g );
+    PackHalf4( float4( accumulator.c_5_8[0].b, accumulator.c_5_8[1].b, accumulator.c_5_8[2].b, accumulator.c_5_8[3].b ), gAccuCoeffsHalfCBV[0].c_5_8_b );
+    
+    gAccuCoeffsHalfCBV[0].c_0 = accumulator.c_0;
 }

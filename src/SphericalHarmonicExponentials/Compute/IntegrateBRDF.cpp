@@ -80,7 +80,7 @@ void IntegrateBRDF::CreateResources( ID3D12Device *inDevice, HeapAllocator &inAl
 	}
 }
 
-void IntegrateBRDF::Execute( ID3D12GraphicsCommandList *inCommandList )
+void IntegrateBRDF::Execute( ID3D12GraphicsCommandList7 *inCommandList )
 {
 	inCommandList->SetPipelineState( mPipelineState.Get() );
 	inCommandList->SetComputeRootSignature( mRootSignature.Get() );

@@ -8,7 +8,7 @@ class TextureResource
 public:
 	TextureResource( std::filesystem::path inPath ) : mPath( inPath ) {};
 
-	void LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
+	void LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
 	void Cleanup( UINT64 inCompletedGraphicsFenceValue );
 	void Destroy();
 

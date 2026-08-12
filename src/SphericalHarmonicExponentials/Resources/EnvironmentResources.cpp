@@ -2,7 +2,7 @@
 
 #include "EnvironmentResources.hpp"
 
-void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
+void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
 {
 	assert( !mEquirectangularLoaded );
 
@@ -347,6 +347,64 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		mSpecularHarmonics10Address = mSpecularHarmonics10->GetGPUVirtualAddress();
 
 		mSpecularHarmonics10->SetName( L"Specular Harmonics10" );
+	}
+
+	// 16 bit row major diffuse harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = 256; // sizeof( UINT ) * 4 * 3 + sizeof( float ) * 4; // Packed format (should be 256, but we're cheating)
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_NONE, 0 );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			nullptr,
+			IID_PPV_ARGS( mDiffuseHarmonicsCBV16.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mDiffuseHarmonicsCBV16Address = mDiffuseHarmonicsCBV16->GetGPUVirtualAddress();
+
+		mDiffuseHarmonicsCBV16->SetName( L"CBV Diffuse Harmonics16" );
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = mDiffuseHarmonicsCBV16Address;
+		cbvDesc.SizeInBytes = harmonicCoeffBytes;
+
+		inAllocator.Allocate( &mDiffuseHarmonicsCBV16HandleCPU, &mDiffuseHarmonicsCBV16HandleGPU );
+		inDevice->CreateConstantBufferView( &cbvDesc, mDiffuseHarmonicsCBV16HandleCPU );
+	}
+
+	// 16 bit row major specular harmonics
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = 256; // sizeof( UINT ) * 16 * 3 + sizeof( float ) * 4; // Packed format (should be 256, but we're cheating)
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_NONE, 0 );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			nullptr,
+			IID_PPV_ARGS( mSpecularHarmonicsCBV16.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mSpecularHarmonicsCBV16Address = mSpecularHarmonicsCBV16->GetGPUVirtualAddress();
+
+		mSpecularHarmonicsCBV16->SetName( L"CBV Specular Harmonics16" );
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = mSpecularHarmonicsCBV16Address;
+		cbvDesc.SizeInBytes = harmonicCoeffBytes;
+
+		inAllocator.Allocate( &mSpecularHarmonicsCBV16HandleCPU, &mSpecularHarmonicsCBV16HandleGPU );
+		inDevice->CreateConstantBufferView( &cbvDesc, mSpecularHarmonicsCBV16HandleCPU );
 	}
 }
 

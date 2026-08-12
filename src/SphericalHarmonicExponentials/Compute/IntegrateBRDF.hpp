@@ -8,7 +8,7 @@ public:
 	static constexpr UINT kIntegratedBRDFResolution = 256;
 
 	void CreateResources( ID3D12Device *inDevice, HeapAllocator &inAllocator, D3D_ROOT_SIGNATURE_VERSION inVersion );
-	void Execute( ID3D12GraphicsCommandList *inCommandList );
+	void Execute( ID3D12GraphicsCommandList7 *inCommandList );
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GetShaderResourceView() const { return mSrvHandleGPU; }
 

@@ -160,9 +160,9 @@ void Application::SetMaterialData( const std::string &inName, const MaterialReso
 
 void Application::ComputeEnvironmentData( const std::string &inName, EnvironmentResources &inResources )
 {
-	ID3D12GraphicsCommandList *commandList = mCommandList.Get();
+	ID3D12GraphicsCommandList7 *commandList = mCommandList.Get();
 
-	WaitForGPU();
+	//WaitForGPU();
 
 	mCubemapConverter->Execute( commandList, inResources, mClampValue );
 	mDiffusePrefilterIBL->Execute( commandList, inResources );
@@ -176,20 +176,18 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 
 void Application::Tick()
 {
-	const UINT64 completedGraphicsFenceValue = mFence->GetCompletedValue();
-	const UINT64 currentGraphicsFenceValue = mFenceValues[mBackBufferIndex];
+	//if ( !mUncappedFramerate ) WaitForGPU();
+	//WaitForGPU();
+
+	//const UINT64 completedGraphicsFenceValue = mFence->GetCompletedValue();
+	//const UINT64 currentGraphicsFenceValue = mFenceValues[mBackBufferIndex];
 
 	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	Prepare();
+	Clear();
 
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
-	for ( auto &[name, resources] : mEnvironmentResources ) {
-		if ( !resources.mEnvironmentDataLoaded ) {
-			ComputeEnvironmentData( name, resources );
-			break;
-		}
-	}
 
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
@@ -217,6 +215,8 @@ void Application::Tick()
 		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", io.DeltaTime * 1000, io.Framerate );
 		ImGui::Checkbox( "Uncapped Framerate", &mUncappedFramerate );
 		//ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
+
+		if ( ImGui::Button( "Wait For GPU" ) ) WaitForGPU();
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "Shading" );
@@ -254,6 +254,8 @@ void Application::Tick()
 		ImGui::RadioButton( "FP16 (N)", &mRenderer->mSHPrecision, 2 );
 		ImGui::SameLine();
 		ImGui::RadioButton( "FP10", &mRenderer->mSHPrecision, 3 );
+
+		ImGui::RadioButton( "FP16 (N, CBV)", &mRenderer->mSHPrecision, 5 );
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
@@ -320,16 +322,26 @@ void Application::Tick()
 		}
 	}
 	ImGui::End();
+	ImGui::Render();
+
+	for ( auto &[name, resources] : mEnvironmentResources ) {
+		if ( !resources.mEnvironmentDataLoaded ) {
+			ComputeEnvironmentData( name, resources );
+			break;
+		}
+	}
 
 	// Update renderer data
 	{
+		//mRenderer->mCameraYaw += 0.00001f;
+
 		if ( !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging( ImGuiMouseButton_Middle ) ) {
 			mRenderer->mCameraPitch += io.MouseDelta.y * 0.0025f;
 			mRenderer->mCameraYaw -= io.MouseDelta.x * 0.0025f;
-
-			mRenderer->mCameraPitch = std::clamp( mRenderer->mCameraPitch, -DirectX::XM_PIDIV2 * 0.99f, DirectX::XM_PIDIV2 * 0.99f );
-			mRenderer->mCameraYaw = std::fmod( mRenderer->mCameraYaw, DirectX::XM_2PI );
 		}
+
+		mRenderer->mCameraPitch = std::clamp( mRenderer->mCameraPitch, -DirectX::XM_PIDIV2 * 0.99f, DirectX::XM_PIDIV2 * 0.99f );
+		mRenderer->mCameraYaw = std::fmod( mRenderer->mCameraYaw, DirectX::XM_2PI );
 
 		mRenderer->mViewportWidth = mOutputWidth;
 		mRenderer->mViewportHeight = mOutputHeight;
@@ -337,15 +349,12 @@ void Application::Tick()
 		mRenderer->CommitData( mBackBufferIndex );
 	}
 
-	Clear();
-
 	if ( auto pair = mEnvironmentResources.find( mSelectedEnvironment ); pair != mEnvironmentResources.end() && pair->second.mEnvironmentDataLoaded ) {
 		mRenderer->Draw( mCommandList.Get(), pair->second, mIntegratedBRDF->GetShaderResourceView() );
 	}
 
 	Resolve();
 
-	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData( ImGui::GetDrawData(), mCommandList.Get() );
 	if ( ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
 		// Update and Render additional Platform Windows
@@ -812,7 +821,13 @@ void Application::Present()
 	mCommandQueue->ExecuteCommandLists( 1, CommandListCast( mCommandList.GetAddressOf() ) );
 
 	// Present without vsync
-	HRESULT hr = mUncappedFramerate ? mSwapChain->Present( 0, DXGI_PRESENT_ALLOW_TEARING ) : mSwapChain->Present( 1, 0 );
+	HRESULT hr;
+	if ( mUncappedFramerate ) {
+		hr = mSwapChain->Present( 0, DXGI_PRESENT_ALLOW_TEARING );
+	}
+	else {
+		hr = mSwapChain->Present( 1, 0 );
+	}
 
 	// If the device was reset we must completely reinitialize the renderer
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {

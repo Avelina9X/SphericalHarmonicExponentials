@@ -3,7 +3,7 @@
 #include "Utils/HeapAllocator.hpp"
 #include "Resources/EnvironmentResources.hpp"
 
-struct RendererData
+struct alignas( 256 ) RendererData
 {
 	DirectX::XMVECTOR EyePosition;
 	DirectX::XMMATRIX ViewProj;
@@ -20,13 +20,13 @@ class Renderer
 public:
 	Renderer( UINT inFrameCount, UINT inSphereTessellation = 256 );
 
-	void CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
+	void CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
 	void LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferFormat, DXGI_FORMAT inDepthBufferFormat, UINT inSampleCount, D3D_ROOT_SIGNATURE_VERSION inVersion );
 	void Cleanup( UINT64 inCompletedGraphicsFenceValue );
 	void Destroy();
 
 	void CommitData( UINT inFrameIndex );
-	void Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const;
+	void Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const;
 
 	RendererData mRendererData = {};
 
@@ -34,9 +34,9 @@ public:
 	size_t mViewportHeight = 0;
 	float mCameraPitch = 0.0f;
 	float mCameraYaw = DirectX::XM_PIDIV2;
-	bool mEnableIBL = true;
+	bool mEnableIBL = false;
 	bool mEnableSH = true;
-	int mSHPrecision = 2;
+	int mSHPrecision = 5;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;
@@ -79,6 +79,10 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH16;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSHNative16;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSH10;
+
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> mShadingRootSignatureSHCBV;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSHCBV16;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateSHCBVNative16;
 
 	// Vertex Data
 	struct VertexData

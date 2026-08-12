@@ -210,5 +210,14 @@
     <FxCompile Include="Shaders\Compute\SH\SH_SpecularSumCS.hlsl">
       <Filter>Shaders\Compute\SH</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SH_ShadeNative16PS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SH_Shade10PS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SH_ShadeCBVNative16PS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

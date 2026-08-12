@@ -6,6 +6,15 @@
 
 void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator &inAllocator, D3D_ROOT_SIGNATURE_VERSION inVersion )
 {
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS  |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+
 	// Create specular collector resources
 	{
 		CD3DX12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -59,6 +68,26 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 		) );
 
 		mSpecularAccumulatorAddress = mSpecularAccumulator->GetGPUVirtualAddress();
+	}
+
+	// 16 bit row major specular harmonics temp
+	{
+		CD3DX12_HEAP_PROPERTIES defaultHeap( D3D12_HEAP_TYPE_DEFAULT );
+		const UINT harmonicCoeffBytes = 256; // sizeof( UINT ) * 16 * 3 + sizeof( float ) * 4; // Packed format (should be 256, but we're cheating)
+		CD3DX12_RESOURCE_DESC coeffBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( harmonicCoeffBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS );
+
+		// Create GPU resource
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&coeffBufferDesc,
+			D3D12_RESOURCE_STATE_COMMON,
+			nullptr,
+			IID_PPV_ARGS( mSpecularTempCBV.ReleaseAndGetAddressOf() )
+		) );
+
+		// Write virtual address
+		mSpecularTempCBVAddress = mSpecularTempCBV->GetGPUVirtualAddress();
 	}
 
 	// Create specular collector PSO and RS
@@ -140,7 +169,7 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 			rootParameters[1].InitAsUnorderedAccessView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, D3D12_SHADER_VISIBILITY_ALL );
 
 			CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC computeRootSignatureDesc;
-			computeRootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, 0, nullptr ); // TODO: flags?
+			computeRootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, 0, nullptr, rootSignatureFlags ); // TODO: flags?
 
 			Microsoft::WRL::ComPtr<ID3DBlob> signature;
 			Microsoft::WRL::ComPtr<ID3DBlob> error;
@@ -162,11 +191,12 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 	// Create specular solver PSO and RS
 	{
 		{
-			CD3DX12_ROOT_PARAMETER1 rootParameters[4];
+			CD3DX12_ROOT_PARAMETER1 rootParameters[5];
 			rootParameters[0].InitAsShaderResourceView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_ALL );
 			rootParameters[1].InitAsUnorderedAccessView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, D3D12_SHADER_VISIBILITY_ALL );
 			rootParameters[2].InitAsUnorderedAccessView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, D3D12_SHADER_VISIBILITY_ALL );
 			rootParameters[3].InitAsUnorderedAccessView( 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, D3D12_SHADER_VISIBILITY_ALL );
+			rootParameters[4].InitAsUnorderedAccessView( 3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, D3D12_SHADER_VISIBILITY_ALL );
 
 			CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC computeRootSignatureDesc;
 			computeRootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, 0, nullptr ); // TODO: flags?
@@ -189,7 +219,7 @@ void SpecularPrefilterSH::CreateResources( ID3D12Device *inDevice, HeapAllocator
 	}
 }
 
-void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources )
+void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources )
 {
 	PIXBeginEvent( inCommandList, PIX_COLOR_DEFAULT, L"SpecularPrefilterSH" );
 
@@ -273,12 +303,13 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 
 	// Execute specular solve
 	{
-		CD3DX12_RESOURCE_BARRIER barriers1[3] = {
+		CD3DX12_RESOURCE_BARRIER barriers1[] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS )
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
+			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ),
 		};
-		inCommandList->ResourceBarrier( 3, barriers1 );
+		inCommandList->ResourceBarrier( _countof( barriers1 ), barriers1 );
 
 		inCommandList->SetPipelineState( mSolverPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mSolverRootSignature.Get() );
@@ -287,15 +318,32 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList *inCommandList, Env
 		inCommandList->SetComputeRootUnorderedAccessView( 1, inResources.mSpecularHarmonics32Address );
 		inCommandList->SetComputeRootUnorderedAccessView( 2, inResources.mSpecularHarmonics16Address );
 		inCommandList->SetComputeRootUnorderedAccessView( 3, inResources.mSpecularHarmonics10Address );
+		inCommandList->SetComputeRootUnorderedAccessView( 4, mSpecularTempCBVAddress );
+
+		CD3DX12_RESOURCE_BARRIER panic = CD3DX12_RESOURCE_BARRIER::UAV( nullptr );
+		inCommandList->ResourceBarrier( 1, &panic );
 
 		inCommandList->Dispatch( 1, 1, 1 );
 
-		CD3DX12_RESOURCE_BARRIER barriers2[3] = {
+		inCommandList->ResourceBarrier( 1, &panic );
+
+		CD3DX12_RESOURCE_BARRIER barriers2[] = {
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
-			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE )
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ),
+			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST ),
 		};
-		inCommandList->ResourceBarrier( 3, barriers2 );
+		inCommandList->ResourceBarrier( _countof( barriers2 ), barriers2 );
+
+		inCommandList->CopyBufferRegion( inResources.mSpecularHarmonicsCBV16.Get(), 0, mSpecularTempCBV.Get(), 0, 256 );
+
+		CD3DX12_RESOURCE_BARRIER barriers3[] = {
+			CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON ),
+			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonicsCBV16.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ),
+		};
+		inCommandList->ResourceBarrier( _countof( barriers3 ), barriers3 );
 	}
 
 	PIXEndEvent( inCommandList );

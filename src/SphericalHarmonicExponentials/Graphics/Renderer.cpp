@@ -12,7 +12,7 @@ Renderer::Renderer( UINT inFrameCount, UINT inSphereTessellation )
 	mFrameResources.resize( inFrameCount );
 }
 
-void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
+void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
 {
 	// Create sphere mesh
 	{
@@ -116,7 +116,7 @@ void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandLis
 	{
 		const UINT bufferBytes = ( sizeof( RendererData ) + 255 ) / 256 * 256;
 		CD3DX12_HEAP_PROPERTIES uploadHeap( D3D12_HEAP_TYPE_UPLOAD );
-		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer( bufferBytes );
+		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer( bufferBytes, D3D12_RESOURCE_FLAG_NONE, 0 );
 
 		for ( UINT i = 0; i < mFrameCount; ++i ) {
 			ThrowIfFailed( inDevice->CreateCommittedResource(
@@ -204,7 +204,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		ranges[3].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC );
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
-		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
+		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_ALL );
 		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[2].InitAsShaderResourceView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
 		rootParameters[3].InitAsShaderResourceView( 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
@@ -223,14 +223,53 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		ThrowIfFailed( inDevice->CreateRootSignature( 0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS( mShadingRootSignatureSH.ReleaseAndGetAddressOf() ) ) );
 	}
 
+	// Create SH CBV root signature
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[6] = {};
+		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[1].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[2].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[3].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[4].Init( D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+		ranges[5].Init( D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+
+		CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
+		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_ALL );
+		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
+
+		rootParameters[2].InitAsConstantBufferView( 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[3].InitAsConstantBufferView( 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE, D3D12_SHADER_VISIBILITY_PIXEL );
+		//rootParameters[2].InitAsDescriptorTable( 1, &ranges[4], D3D12_SHADER_VISIBILITY_PIXEL );
+		//rootParameters[3].InitAsDescriptorTable( 1, &ranges[5], D3D12_SHADER_VISIBILITY_PIXEL );
+
+		rootParameters[4].InitAsDescriptorTable( 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[5].InitAsDescriptorTable( 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL );
+		rootParameters[6].InitAsDescriptorTable( 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL );
+
+		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { clampSampler, anisotropicSampler };
+
+		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, _countof( samplers ), samplers, rootSignatureFlags );
+
+		Microsoft::WRL::ComPtr<ID3DBlob> signature;
+		Microsoft::WRL::ComPtr<ID3DBlob> error;
+		ThrowIfFailed( D3DX12SerializeVersionedRootSignature( &rootSignatureDesc, inVersion, &signature, &error ) );
+		ThrowIfFailed( inDevice->CreateRootSignature( 0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS( mShadingRootSignatureSHCBV.ReleaseAndGetAddressOf() ) ) );
+	}
+
 	// Create PSOs
 	{
 		std::vector vsBlob = DX::ReadData( L"./ShadeVS.cso" );
+
 		std::vector psBlobIBL = DX::ReadData( L"./IBL_ShadePS.cso" );
+
 		std::vector psBlobSH32 = DX::ReadData( L"./SH_Shade32PS.cso" );
 		std::vector psBlobSH16 = DX::ReadData( L"./SH_Shade16PS.cso" );
 		std::vector psBlobSHNative16 = DX::ReadData( L"./SH_ShadeNative16PS.cso" );
 		std::vector psBlobSH10 = DX::ReadData( L"./SH_Shade10PS.cso" );
+
+		//std::vector psBlobSHCBV16 = DX::ReadData( L"./SH_ShadeCBV16PS.cso" );
+		std::vector psBlobSHCBVNative16 = DX::ReadData( L"./SH_ShadeCBVNative16PS.cso" );
 
 		// Define the vertex input layout
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
@@ -273,6 +312,14 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH10.data(), psBlobSH10.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH10.ReleaseAndGetAddressOf() ) ) );
+
+		//psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
+		//psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBV16.data(), psBlobSHCBV16.size() );
+		//ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBV16.ReleaseAndGetAddressOf() ) ) );
+
+		psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBVNative16.data(), psBlobSHCBVNative16.size() );
+		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBVNative16.ReleaseAndGetAddressOf() ) ) );
 	}
 }
 
@@ -288,7 +335,7 @@ void Renderer::CommitData( UINT inFrameIndex )
 {
 	mFrameIndex = inFrameIndex;
 
-	float zoom = 0.0f;
+	float zoom = 0.4f;
 
 	DirectX::XMVECTOR cameraPos = DirectX::XMVectorSet( std::sin( mCameraYaw ) * std::cos( mCameraPitch ), std::sin( mCameraPitch ), std::cos( mCameraYaw ) * std::cos( mCameraPitch ), 0.0f );
 	cameraPos = DirectX::XMVectorScale( DirectX::XMVector3Normalize( cameraPos ), std::lerp( 2.0f, 1.1f, zoom ) );
@@ -306,7 +353,7 @@ void Renderer::CommitData( UINT inFrameIndex )
 	memcpy( mFrameResources[mFrameIndex].mDataPointer, &mRendererData, sizeof( RendererData ) );
 }
 
-void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const
+void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const
 {
 	inCommandList->IASetPrimitiveTopology( D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
@@ -344,7 +391,12 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 			inCommandList->RSSetScissorRects( 1, &scissorRect );
 		}
 
-		inCommandList->SetGraphicsRootSignature( mShadingRootSignatureSH.Get() );
+		if ( mSHPrecision < 4 ) {
+			inCommandList->SetGraphicsRootSignature( mShadingRootSignatureSH.Get() );
+		}
+		else {
+			inCommandList->SetGraphicsRootSignature( mShadingRootSignatureSHCBV.Get() );
+		}
 
 		switch ( mSHPrecision ) {
 			case 0:
@@ -369,6 +421,27 @@ void Renderer::Draw( ID3D12GraphicsCommandList *inCommandList, EnvironmentResour
 				inCommandList->SetPipelineState( mShadingPipelineStateSH10.Get() );
 				inCommandList->SetGraphicsRootShaderResourceView( 2, inResources.mDiffuseHarmonics10Address );
 				inCommandList->SetGraphicsRootShaderResourceView( 3, inResources.mSpecularHarmonics10Address );
+				break;
+
+			case 5:
+				if ( true ) {
+					D3D12_RESOURCE_BARRIER barrier = {};
+					barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+					barrier.Transition.pResource = inResources.mDiffuseHarmonicsCBV16.Get();
+					barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+					barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+					barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+					inCommandList->ResourceBarrier( 1, &barrier );
+
+					barrier.Transition.pResource = inResources.mSpecularHarmonicsCBV16.Get();
+					inCommandList->ResourceBarrier( 1, &barrier );
+				}
+
+				inCommandList->SetPipelineState( mShadingPipelineStateSHCBVNative16.Get() );
+				inCommandList->SetGraphicsRootConstantBufferView( 2, inResources.mDiffuseHarmonicsCBV16Address );
+				inCommandList->SetGraphicsRootConstantBufferView( 3, inResources.mSpecularHarmonicsCBV16Address );
+				//inCommandList->SetGraphicsRootDescriptorTable( 2, inResources.mDiffuseHarmonicsCBV16HandleGPU );
+				//inCommandList->SetGraphicsRootDescriptorTable( 3, inResources.mSpecularHarmonicsCBV16HandleGPU );
 				break;
 		}
 		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );

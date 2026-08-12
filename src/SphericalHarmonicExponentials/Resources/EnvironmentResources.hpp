@@ -8,7 +8,7 @@ class EnvironmentResources
 public:
 	EnvironmentResources( std::filesystem::path inPath ) : mPath( inPath ) {};
 
-	void LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
+	void LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
 	void Cleanup( UINT64 inCompletedGraphicsFenceValue );
 	void Destroy();
 
@@ -71,4 +71,15 @@ public:
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularHarmonics10;
 	D3D12_GPU_VIRTUAL_ADDRESS mSpecularHarmonics10Address;
+
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mDiffuseHarmonicsCBV16;
+	D3D12_GPU_VIRTUAL_ADDRESS mDiffuseHarmonicsCBV16Address;
+	D3D12_CPU_DESCRIPTOR_HANDLE mDiffuseHarmonicsCBV16HandleCPU;
+	D3D12_GPU_DESCRIPTOR_HANDLE mDiffuseHarmonicsCBV16HandleGPU;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mSpecularHarmonicsCBV16;
+	D3D12_GPU_VIRTUAL_ADDRESS mSpecularHarmonicsCBV16Address;
+	D3D12_CPU_DESCRIPTOR_HANDLE mSpecularHarmonicsCBV16HandleCPU;
+	D3D12_GPU_DESCRIPTOR_HANDLE mSpecularHarmonicsCBV16HandleGPU;
 };

@@ -6,7 +6,7 @@ class SpecularPrefilterIBL
 {
 public:
 	void CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNATURE_VERSION inVersion );
-	void Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources, float inMipBias = 1.0f );
+	void Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, float inMipBias = 1.0f );
 	void Destroy();
 
 protected:

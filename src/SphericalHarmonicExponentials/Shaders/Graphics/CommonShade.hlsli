@@ -16,6 +16,7 @@ cbuffer Constants : register( b0 )
     float gRoughness;
     float gMetallic;
     float gExposure;
+    uint4 _pad[9];
 };
 
 // Christian Schuler, "Normal Mapping without Precomputed Tangents", ShaderX 5, Chapter 2.6, pp. 131-140

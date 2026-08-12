@@ -83,7 +83,7 @@ protected:
 	// Graphics pipeline
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mCommandAllocators[kBackBufferCount];
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList7> mCommandList;
 
 	// Heaps
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
@@ -124,5 +124,5 @@ protected:
 	float mClampValue = 1000.0f;
 	float mSpecularPrefilterMipBias = 1.0f;
 
-	bool mUncappedFramerate = false;
+	bool mUncappedFramerate = true;
 };

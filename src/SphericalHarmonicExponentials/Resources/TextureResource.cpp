@@ -2,7 +2,7 @@
 
 #include "TextureResource.hpp"
 
-void TextureResource::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
+void TextureResource::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue )
 {
 	DirectX::ScratchImage srcImage;
 

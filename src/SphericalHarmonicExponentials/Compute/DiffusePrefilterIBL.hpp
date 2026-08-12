@@ -6,7 +6,7 @@ class DiffusePrefilterIBL
 {
 public:
 	void CreateResources( ID3D12Device *inDevice, D3D_ROOT_SIGNATURE_VERSION inVersion );
-	void Execute( ID3D12GraphicsCommandList *inCommandList, EnvironmentResources &inResources );
+	void Execute( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources );
 	void Destroy();
 
 protected:
