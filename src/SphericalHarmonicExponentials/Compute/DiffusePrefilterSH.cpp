@@ -159,13 +159,13 @@ void DiffusePrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, Env
 	// Execute SH accumulation
 	{
 		CD3DX12_RESOURCE_BARRIER barriers1[] = {
+			CD3DX12_RESOURCE_BARRIER::Transition( mHarmonicsArray.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ),
+			//CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion!
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mDiffuseHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
-			//CD3DX12_RESOURCE_BARRIER::Transition( mDiffuseTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion!
-			CD3DX12_RESOURCE_BARRIER::Transition( mHarmonicsArray.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ),
 		};
-		inCommandList->ResourceBarrier( _countof( barriers1 ), barriers1 );
+		inCommandList->ResourceBarrier( _countof( barriers1 ) * 0 + 1, barriers1 ); // FIXME? I had one GBV crash here, but cannot replicate
 
 		inCommandList->SetPipelineState( mAccumulatorPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mAccumulatorRootSignature.Get() );

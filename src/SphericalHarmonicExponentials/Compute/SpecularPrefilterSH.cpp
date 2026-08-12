@@ -304,12 +304,12 @@ void SpecularPrefilterSH::Execute( ID3D12GraphicsCommandList7 *inCommandList, En
 	// Execute specular solve
 	{
 		CD3DX12_RESOURCE_BARRIER barriers1[] = {
+			//CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics32.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics16.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
 			CD3DX12_RESOURCE_BARRIER::Transition( inResources.mSpecularHarmonics10.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion?
-			//CD3DX12_RESOURCE_BARRIER::Transition( mSpecularTempCBV.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS ), // Not needed, auto promotion
 		};
-		inCommandList->ResourceBarrier( _countof( barriers1 ), barriers1 );
+		inCommandList->ResourceBarrier( _countof( barriers1 ) * 0, barriers1 ); // FIXME? I had one GBV crash here, but cannot replicate
 
 		inCommandList->SetPipelineState( mSolverPipelineState.Get() );
 		inCommandList->SetComputeRootSignature( mSolverRootSignature.Get() );

@@ -185,7 +185,6 @@ void Application::Tick()
 
 	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	Prepare();
-	Clear();
 
 	mCommandList->SetDescriptorHeaps( 1, ppHeaps );
 
@@ -325,12 +324,23 @@ void Application::Tick()
 	ImGui::End();
 	ImGui::Render();
 
-	for ( auto &[name, resources] : mEnvironmentResources ) {
-		if ( !resources.mEnvironmentDataLoaded ) {
-			ComputeEnvironmentData( name, resources );
-			break;
+	// Auto 
+	if ( false ) {
+		for ( auto &[name, resources] : mEnvironmentResources ) {
+			if ( !resources.mEnvironmentDataLoaded ) {
+				ComputeEnvironmentData( name, resources );
+				break;
+			}
 		}
 	}
+	else {
+		auto &[name, resources] = *mEnvironmentResources.begin();
+		if ( !resources.mEnvironmentDataLoaded ) {
+			ComputeEnvironmentData( name, resources );
+		}
+	}
+
+	Clear();
 
 	// Update renderer data
 	{

@@ -291,8 +291,6 @@
     <FxCompile Include="Shaders\Graphics\ShadeVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-enable-16bit-types %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-enable-16bit-types %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
     <FxCompile Include="Shaders\Graphics\SH_ShadeCBVNative16PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

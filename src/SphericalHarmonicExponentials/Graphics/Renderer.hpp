@@ -36,7 +36,7 @@ public:
 	float mCameraYaw = DirectX::XM_PIDIV2;
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
-	int mSHPrecision = 0;
+	int mSHPrecision = 5;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE mAlbedoSrvHandleGPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE mNormalSrvHandleGPU;
