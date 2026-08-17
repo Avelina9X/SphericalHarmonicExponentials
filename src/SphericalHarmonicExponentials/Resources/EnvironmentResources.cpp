@@ -12,7 +12,7 @@ void EnvironmentResources::LoadTexture( ID3D12Device *inDevice, ID3D12GraphicsCo
 		ThrowIfFailed( DirectX::LoadFromHDRFile( mPath.c_str(), nullptr, hdrOrigImage ) );
 		ThrowIfFailed( DirectX::Convert(
 			*hdrOrigImage.GetImage( 0, 0, 0 ),
-			DXGI_FORMAT_R16G16B16A16_FLOAT,
+			DXGI_FORMAT_R9G9B9E5_SHAREDEXP,
 			DirectX::TEX_FILTER_DEFAULT,
 			DirectX::TEX_THRESHOLD_DEFAULT,
 			hdrImage

@@ -177,12 +177,6 @@ void Application::ComputeEnvironmentData( const std::string &inName, Environment
 
 void Application::Tick()
 {
-	//if ( !mUncappedFramerate ) WaitForGPU();
-	//WaitForGPU();
-
-	//const UINT64 completedGraphicsFenceValue = mFence->GetCompletedValue();
-	//const UINT64 currentGraphicsFenceValue = mFenceValues[mBackBufferIndex];
-
 	ID3D12DescriptorHeap* ppHeaps[] = { mSrvHeap.Get() };
 	Prepare();
 
@@ -227,6 +221,20 @@ void Application::Tick()
 			ImGui::Image( mIntegratedBRDF->GetShaderResourceView().ptr, { width, width } );
 		}
 
+		if ( ImGui::IsKeyPressed( ImGuiKey_RightBracket, false ) ) {
+			auto curr = ++mMaterialResources.find( mSelectedMaterial );
+			if ( curr != mMaterialResources.end() ) {
+				SetMaterialData( curr->first, curr->second );
+			}
+		}
+		else if ( ImGui::IsKeyPressed( ImGuiKey_LeftBracket, false ) ) {
+			auto curr = mMaterialResources.find( mSelectedMaterial );
+			if ( curr != mMaterialResources.begin() ) {
+				--curr;
+				SetMaterialData( curr->first, curr->second );
+			}
+		}
+
 		if ( ImGui::BeginCombo( "Material", mSelectedMaterial.c_str() ) ) {
 			for ( const auto &[name, material] : mMaterialResources ) {
 				if ( ImGui::Selectable( name.c_str(), name == mSelectedMaterial ) ) {
@@ -253,13 +261,17 @@ void Application::Tick()
 		ImGui::SameLine();
 		ImGui::RadioButton( "FP16", &mRenderer->mSHPrecision, 1 );
 		ImGui::SameLine();
+		ImGui::BeginDisabled( !mRenderer->mSupportsNative16 );
 		ImGui::RadioButton( "FP16 (N)", &mRenderer->mSHPrecision, 2 );
+		ImGui::EndDisabled();
 		ImGui::SameLine();
 		ImGui::RadioButton( "FP10", &mRenderer->mSHPrecision, 3 );
 
 		ImGui::RadioButton( "FP16 (CBV)", &mRenderer->mSHPrecision, 4 );
 		ImGui::SameLine();
+		ImGui::BeginDisabled( !mRenderer->mSupportsNative16 );
 		ImGui::RadioButton( "FP16 (N, CBV)", &mRenderer->mSHPrecision, 5 );
+		ImGui::EndDisabled();
 
 		ImGui::Dummy( { 256.0f, 0.0f } );
 		ImGui::SeparatorText( "HDRIs" );
@@ -279,6 +291,19 @@ void Application::Tick()
 
 		ImGui::SetNextItemWidth( width / 2 );
 		ImGui::DragFloatRange2( "SH Min/Max Alpha", &mSpecularPrefilterSH->mMinAlphaLevel, &mSpecularPrefilterSH->mMaxAlphaLevel, 0.001f, 0.0f, 1.0f, "%.2f", "%.2f", ImGuiSliderFlags_AlwaysClamp );
+
+		if ( ImGui::IsKeyPressed( ImGuiKey_Equal, false ) ) {
+			auto curr = ++mEnvironmentResources.find( mSelectedEnvironment );
+			if ( curr != mEnvironmentResources.end() && curr->second.mEnvironmentDataLoaded ) {
+				mSelectedEnvironment = curr->first;
+			}
+		}
+		else if ( ImGui::IsKeyPressed( ImGuiKey_Minus, false ) ) {
+			auto curr = mEnvironmentResources.find( mSelectedEnvironment );
+			if ( curr != mEnvironmentResources.begin() && ( --curr )->second.mEnvironmentDataLoaded ) {
+				mSelectedEnvironment = curr->first;
+			}
+		}
 
 		for ( auto &[name, resources] : mEnvironmentResources ) {
 			ImGui::PushID( name.c_str() );
@@ -449,10 +474,20 @@ void Application::CreateDeviceResources()
 		OutputDebugStringA( std::format( "Shader Model {:x} supported!\n", static_cast<uint32_t>( shaderModel.HighestShaderModel ) ).c_str() );
 	}
 
+	// Get root sig support
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE rootFeatureData = {};
 	rootFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 	if ( FAILED( mDevice->CheckFeatureSupport( D3D12_FEATURE_ROOT_SIGNATURE, &rootFeatureData, sizeof( rootFeatureData ) ) ) ) {
 		rootFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+	}
+
+	D3D12_FEATURE_DATA_D3D12_OPTIONS4 featureSupport = {};
+	if ( FAILED( mDevice->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS4, &featureSupport, sizeof( featureSupport ) ) )
+		|| !featureSupport.Native16BitShaderOpsSupported ) {
+		OutputDebugStringA( "16 bit shaders NOT supported!" );
+	}
+	else {
+		OutputDebugStringA( "16 bit shaders supported!\n" );
 	}
 
 	// ImGui Init
@@ -524,7 +559,7 @@ void Application::CreateDeviceResources()
 
 	// Load Renderer
 	mRenderer->CreateResources( mDevice.Get(), mCommandList.Get(), mSrvHeapAllocator, mFenceValues[mBackBufferIndex] );
-	mRenderer->LoadShaders( mDevice.Get(), kBackBufferFormat, kDepthBufferFormat, kSampleCount, rootFeatureData.HighestVersion );
+	mRenderer->LoadShaders( mDevice.Get(), kBackBufferFormat, kDepthBufferFormat, kSampleCount, rootFeatureData.HighestVersion, featureSupport.Native16BitShaderOpsSupported );
 
 	// Create all compute resources
 	{

@@ -23,7 +23,7 @@ public:
 	Renderer( UINT inFrameCount, UINT inSphereTessellation = 256 );
 
 	void CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandList7 *inCommandList, HeapAllocator &inAllocator, UINT64 inCurrentGraphicsFenceValue );
-	void LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferFormat, DXGI_FORMAT inDepthBufferFormat, UINT inSampleCount, D3D_ROOT_SIGNATURE_VERSION inVersion );
+	void LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferFormat, DXGI_FORMAT inDepthBufferFormat, UINT inSampleCount, D3D_ROOT_SIGNATURE_VERSION inVersion, BOOL inNative16 );
 	void Cleanup( UINT64 inCompletedGraphicsFenceValue );
 	void Destroy();
 
@@ -38,6 +38,7 @@ public:
 	float mCameraYaw = DirectX::XM_PIDIV2;
 	bool mEnableIBL = true;
 	bool mEnableSH = true;
+	bool mSupportsNative16 = true;
 	int mSHPrecision = 5;
 	float mZoomLevel = 0;
 

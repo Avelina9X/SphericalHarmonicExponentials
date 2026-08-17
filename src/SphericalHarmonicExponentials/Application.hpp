@@ -124,5 +124,5 @@ protected:
 	float mClampValue = 1000.0f;
 	float mSpecularPrefilterMipBias = 1.0f;
 
-	bool mUncappedFramerate = true;
+	bool mUncappedFramerate = false;
 };

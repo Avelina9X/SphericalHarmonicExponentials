@@ -175,8 +175,14 @@ void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandLis
 	}
 }
 
-void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferFormat, DXGI_FORMAT inDepthBufferFormat, UINT inSampleCount, D3D_ROOT_SIGNATURE_VERSION inVersion )
+void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferFormat, DXGI_FORMAT inDepthBufferFormat, UINT inSampleCount, D3D_ROOT_SIGNATURE_VERSION inVersion, BOOL inNative16 )
 {
+	mSupportsNative16 = inNative16;
+
+	if ( !mSupportsNative16 && ( mSHPrecision == 5 || mSHPrecision == 2 ) ) {
+		mSHPrecision--;
+	}
+
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
@@ -392,9 +398,11 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH16.data(), psBlobSH16.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSH16.ReleaseAndGetAddressOf() ) ) );
 
-		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
-		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHNative16.data(), psBlobSHNative16.size() );
-		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHNative16.ReleaseAndGetAddressOf() ) ) );
+		if ( mSupportsNative16 ) {
+			psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
+			psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHNative16.data(), psBlobSHNative16.size() );
+			ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHNative16.ReleaseAndGetAddressOf() ) ) );
+		}
 
 		psoDesc.pRootSignature = mShadingRootSignatureSH.Get();
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSH10.data(), psBlobSH10.size() );
@@ -404,9 +412,11 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBV16.data(), psBlobSHCBV16.size() );
 		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBV16.ReleaseAndGetAddressOf() ) ) );
 
-		psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
-		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBVNative16.data(), psBlobSHCBVNative16.size() );
-		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBVNative16.ReleaseAndGetAddressOf() ) ) );
+		if ( mSupportsNative16 ) {
+			psoDesc.pRootSignature = mShadingRootSignatureSHCBV.Get();
+			psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlobSHCBVNative16.data(), psBlobSHCBVNative16.size() );
+			ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mShadingPipelineStateSHCBVNative16.ReleaseAndGetAddressOf() ) ) );
+		}
 	}
 }
 
