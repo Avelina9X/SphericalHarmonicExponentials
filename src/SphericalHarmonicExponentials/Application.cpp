@@ -274,7 +274,7 @@ void Application::Tick()
 		ImGui::SeparatorText( "HDRIs" );
 
 		ImGui::SetNextItemWidth( width / 2 );
-		ImGui::SliderFloat( "IBL Cubemap Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
+		ImGui::SliderFloat( "Environment Clamp", &mClampValue, 1.0f, 20000.0f, "%.0f", ImGuiSliderFlags_Logarithmic );
 
 		ImGui::SetNextItemWidth( width / 2 );
 		ImGui::SliderFloat( "IBL Specular Bias", &mSpecularPrefilterMipBias, 0.0f, 2.0f );
