@@ -68,4 +68,4 @@ I'm gonna point out a couple 'quirks' in the codebase for those that are interes
   	inResources.mCreatedThisFrame = false;
   }
   ```
-  We must perform a barrier on the 16 bit SH CBVs in every frame following the one it which they were last updated otherwise we experience cache invalidation issue when multiple frames are in flight. There is absolutely no reason this should be necessary. The resources will automatically promote to the correct state without intervention. However without the 'pointless' barrier we experience glitches. No one can figure out why it occurs in the first place, nor why this fixes things.
+  We must perform a barrier on the 16 bit SH CBVs on every frame following the one in which they were last updated otherwise we experience cache invalidation issue when multiple frames are in flight. There is absolutely no reason this should be necessary. The resources will automatically promote to the correct state without intervention. However without the 'pointless' barrier we experience glitches. No one can figure out why it occurs in the first place, nor why this fixes things.
