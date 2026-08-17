@@ -222,5 +222,11 @@
     <FxCompile Include="Shaders\Graphics\SH_ShadeCBV16PS.hlsl">
       <Filter>Shaders\Graphics</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SkyVS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Graphics\SkyPS.hlsl">
+      <Filter>Shaders\Graphics</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

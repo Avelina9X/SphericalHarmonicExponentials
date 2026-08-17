@@ -14,7 +14,7 @@ public:
 
 	static constexpr UINT kDiffuseCubemapResolution = 32;
 
-	static constexpr UINT kRoughnessLevelsIBL = 6;
+	static constexpr UINT kRoughnessLevelsIBL = 5;
 
 	size_t mCubemapResolution = 0;
 	size_t mCubemapMipLevels = 0;

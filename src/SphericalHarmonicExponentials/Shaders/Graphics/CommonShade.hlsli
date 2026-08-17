@@ -6,17 +6,24 @@ struct PSInput
     float2 UV : TEXCOORD2;
 };
 
+struct PSInputSky
+{
+    float4 PositionPS : SV_Position;
+    float3 DirectionWS : TEXCOORD0;
+};
+
 cbuffer Constants : register( b0 )
 {
     float3 gEyePosition;
     float4x4 gViewProj;
+    float4x4 gInvView;
+    float4x4 gInvProj;
     float3 gAlbedo;
     float gNormalStrength;
     float gAO;
     float gRoughness;
     float gMetallic;
     float gExposure;
-    uint4 _pad[9];
 };
 
 // Christian Schuler, "Normal Mapping without Precomputed Tangents", ShaderX 5, Chapter 2.6, pp. 131-140

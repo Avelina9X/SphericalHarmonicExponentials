@@ -92,7 +92,7 @@ float4 main( PSInput input ) : SV_TARGET
     float3 irradiance = gDiffuseTex.Sample( gSampler, N ).rgb;
     float3 diffuse = irradiance * albedo;
     
-    const float MAX_REFLECTION_LOD = 5.0;
+    const float MAX_REFLECTION_LOD = 4.0;
     float3 prefilteredColor = gSpecularTex.SampleLevel( gSampler, R, roughness * MAX_REFLECTION_LOD ).rgb;
     float2 brdf = gIntegratedBRDF.SampleLevel( gClampSampler, float2( NdotV, saturate( roughness ) ), 0.0f );
     float3 specular = prefilteredColor * ( F * brdf.x + brdf.y );

@@ -112,6 +112,44 @@ void Renderer::CreateResources( ID3D12Device *inDevice, ID3D12GraphicsCommandLis
 		mSphereIndexBufferView.SizeInBytes = indexBufferBytes;
 	}
 
+	// Create sky VBO
+	{
+		std::vector<DirectX::XMFLOAT2> vertices( 6 );
+		vertices[0] = { -1.0f, 1.0f };
+		vertices[1] = { -1.0f, -1.0f };
+		vertices[2] = { 1.0f, 1.0f };
+
+		vertices[3] = { 1.0f, 1.0f };
+		vertices[4] = { -1.0f, -1.0f };
+		vertices[5] = { 1.0f, -1.0f };
+
+		const UINT vertexBufferBytes = vertices.size() * sizeof( DirectX::XMFLOAT2 );
+		CD3DX12_RESOURCE_DESC vertexBufferDesc = CD3DX12_RESOURCE_DESC::Buffer( vertexBufferBytes );
+
+		CD3DX12_HEAP_PROPERTIES uploadHeap( D3D12_HEAP_TYPE_UPLOAD );
+
+		ThrowIfFailed( inDevice->CreateCommittedResource(
+			&uploadHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&vertexBufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS( mSkyVBO.ReleaseAndGetAddressOf() )
+		) );
+
+		// Map, write, unmap
+		CD3DX12_RANGE readRange( 0, 0 );
+		void *dataPtr = nullptr;
+		ThrowIfFailed( mSkyVBO->Map( 0, &readRange, &dataPtr ) );
+		memcpy( dataPtr, vertices.data(), vertexBufferBytes );
+		mSkyVBO->Unmap( 0, nullptr );
+
+		// Intialize VBO views
+		mSkyVertexBufferView.BufferLocation = mSkyVBO->GetGPUVirtualAddress();
+		mSkyVertexBufferView.StrideInBytes = sizeof( DirectX::XMFLOAT2 );
+		mSkyVertexBufferView.SizeInBytes = vertexBufferBytes;
+	}
+
 	// Create scene constant buffer resources
 	{
 		const UINT bufferBytes = ( sizeof( RendererData ) + 255 ) / 256 * 256;
@@ -164,6 +202,55 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		D3D12_TEXTURE_ADDRESS_MODE_WRAP
 	);
 	anisotropicSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// Create Sky root signature and PSO
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
+		ranges[0].Init( D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE );
+
+		CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+		rootParameters[0].InitAsConstantBufferView( 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL );
+		rootParameters[1].InitAsDescriptorTable( 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL );
+
+		CD3DX12_STATIC_SAMPLER_DESC samplers[] = { anisotropicSampler };
+		samplers[0].ShaderRegister = 0;
+
+		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init_1_1( _countof( rootParameters ), rootParameters, _countof( samplers ), samplers, rootSignatureFlags );
+
+		Microsoft::WRL::ComPtr<ID3DBlob> signature;
+		Microsoft::WRL::ComPtr<ID3DBlob> error;
+		ThrowIfFailed( D3DX12SerializeVersionedRootSignature( &rootSignatureDesc, inVersion, &signature, &error ) );
+		ThrowIfFailed( inDevice->CreateRootSignature( 0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS( mSkyRootSignature.ReleaseAndGetAddressOf() ) ) );
+
+		std::vector vsBlob = DX::ReadData( L"./SkyVS.cso" );
+		std::vector psBlob = DX::ReadData( L"./SkyPS.cso" );
+
+		// Define the vertex input layout
+		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		// Describe and create the graphics pipeline state object (PSO).
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.InputLayout = { inputElementDescs, _countof( inputElementDescs ) };
+		psoDesc.VS = CD3DX12_SHADER_BYTECODE( vsBlob.data(), vsBlob.size() );
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC( D3D12_DEFAULT );
+		psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
+		psoDesc.BlendState = CD3DX12_BLEND_DESC( D3D12_DEFAULT );
+		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC( D3D12_DEFAULT );
+		psoDesc.DepthStencilState.DepthEnable = FALSE;
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = inBackBufferFormat;
+		psoDesc.DSVFormat = inDepthBufferFormat;
+		psoDesc.SampleDesc.Count = inSampleCount;
+
+		psoDesc.pRootSignature = mSkyRootSignature.Get();
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE( psBlob.data(), psBlob.size() );
+		ThrowIfFailed( inDevice->CreateGraphicsPipelineState( &psoDesc, IID_PPV_ARGS( mSkyPipelineState.ReleaseAndGetAddressOf() ) ) );
+	}
 
 	// Create IBL root signature
 	{
@@ -257,7 +344,7 @@ void Renderer::LoadShaders( ID3D12Device *inDevice, DXGI_FORMAT inBackBufferForm
 		ThrowIfFailed( inDevice->CreateRootSignature( 0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS( mShadingRootSignatureSHCBV.ReleaseAndGetAddressOf() ) ) );
 	}
 
-	// Create PSOs
+	// Create shading PSOs
 	{
 		std::vector vsBlob = DX::ReadData( L"./ShadeVS.cso" );
 
@@ -341,11 +428,15 @@ void Renderer::CommitData( UINT inFrameIndex )
 	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtRH( cameraPos, DirectX::g_XMZero, DirectX::XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ) );
 
 	float aspectRatio = static_cast<float>( mViewportWidth ) / static_cast<float>( mViewportHeight );
-	if ( mEnableIBL && mEnableSH ) aspectRatio /= 2.0f;
 
+	mRendererData.InvProj = DirectX::XMMatrixInverse( nullptr, DirectX::XMMatrixPerspectiveFovRH( DirectX::XM_PI / 2.5f, aspectRatio, 0.01f, 100.0f ) );
+
+	if ( mEnableIBL && mEnableSH ) aspectRatio /= 2.0f;
 	DirectX::XMMATRIX proj = DirectX::XMMatrixPerspectiveFovRH( DirectX::XM_PI / 2.5f, aspectRatio, 0.01f, 100.0f );
 
-	mRendererData.EyePosition = DirectX::XMMatrixInverse( nullptr, view ).r[3];
+	mRendererData.InvView = DirectX::XMMatrixInverse( nullptr, view );
+
+	mRendererData.EyePosition = mRendererData.InvView.r[3];
 	mRendererData.ViewProj = DirectX::XMMatrixMultiplyTranspose( view, proj );
 
 	memcpy( mFrameResources[mFrameIndex].mDataPointer, &mRendererData, sizeof( RendererData ) );
@@ -354,6 +445,18 @@ void Renderer::CommitData( UINT inFrameIndex )
 void Renderer::Draw( ID3D12GraphicsCommandList7 *inCommandList, EnvironmentResources &inResources, D3D12_GPU_DESCRIPTOR_HANDLE inBRDF ) const
 {
 	inCommandList->IASetPrimitiveTopology( D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+
+	{
+		inCommandList->IASetVertexBuffers( 0, 1, &mSkyVertexBufferView );
+
+		inCommandList->SetGraphicsRootSignature( mSkyRootSignature.Get() );
+		inCommandList->SetPipelineState( mSkyPipelineState.Get() );
+
+		inCommandList->SetGraphicsRootConstantBufferView( 0, mFrameResources[mFrameIndex].mBufferAddress );
+		inCommandList->SetGraphicsRootDescriptorTable( 1, inResources.mUnfilteredCubemapSrvHandleGPU );
+
+		inCommandList->DrawInstanced( 6, 1, 0, 0 );
+	}
 
 	inCommandList->IASetIndexBuffer( &mSphereIndexBufferView );
 	inCommandList->IASetVertexBuffers( 0, 1, &mSphereVertexBufferView );

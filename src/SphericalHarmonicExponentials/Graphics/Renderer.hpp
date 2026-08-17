@@ -7,6 +7,8 @@ struct alignas( 256 ) RendererData
 {
 	DirectX::XMVECTOR EyePosition;
 	DirectX::XMMATRIX ViewProj;
+	DirectX::XMMATRIX InvView;
+	DirectX::XMMATRIX InvProj;
 	DirectX::XMFLOAT3 Albedo = { 1.0f, 1.0f, 1.0f };
 	float Normal = 1.0f;
 	float Occlusion = 1.0f;
@@ -57,6 +59,10 @@ protected:
 	UINT mSphereTessellation = 0;
 	UINT mSphereIndexCount = 0;
 
+	// Sky data
+	Microsoft::WRL::ComPtr<ID3D12Resource> mSkyVBO;
+	D3D12_VERTEX_BUFFER_VIEW mSkyVertexBufferView;
+
 	// Frame resources
 	UINT mFrameCount = 0;
 	UINT mFrameIndex = 0;
@@ -72,6 +78,9 @@ protected:
 	std::vector<FrameResource> mFrameResources;
 
 	// Shading states
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> mSkyRootSignature;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> mSkyPipelineState;
+
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mShadingRootSignatureIBL;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> mShadingPipelineStateIBL;
 
