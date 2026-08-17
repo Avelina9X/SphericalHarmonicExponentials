@@ -1,6 +1,9 @@
 # Spherical Harmonic Exponentials for Efficient Glossy Reflections in D3D12
 This repo is an implementation of [Activision's paper](https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.70219) in D3D12, showcasing the application of Spherical Harmonics for specular indirect lighting.
 
+<img width="1922" height="1112" alt="image" src="https://github.com/user-attachments/assets/9a00bd89-95c3-4925-8ecd-a99374b42433" />
+
+
 ## Features
 - End-to-end computation of both diffuse and specular spherical harmonics implemented entirely in compute shaders.
 - Computation of both diffuse and specular IBL to serve as a comparison.
