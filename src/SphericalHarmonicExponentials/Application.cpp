@@ -208,9 +208,6 @@ void Application::Tick()
 
 		ImGui::Text( "Frame time %.3f ms (%.1f FPS)", io.DeltaTime * 1000, io.Framerate );
 		ImGui::Checkbox( "Uncapped Framerate", &mUncappedFramerate );
-		//ImGui::Image( mSpecularPrefilterSH->mSpecularCollectorSrvHandleGPU.ptr, { width, width } );
-
-		if ( ImGui::Button( "Wait For GPU" ) ) WaitForGPU();
 
 		ImGui::SliderFloat( "Zoom Level", &mRenderer->mZoomLevel, 0.0f, 1.0f, "%.2f" );
 
@@ -411,7 +408,11 @@ void Application::Tick()
 void Application::CreateDeviceResources()
 {
 	// Set device to developer mode
-	ThrowIfFailed( mDevice->SetStablePowerState( TRUE ) );
+	HRESULT hr = mDevice->SetStablePowerState( TRUE );
+	if ( FAILED( hr ) ) {
+		MessageBoxA( NULL, "Developer mode is required to set stable power state.\nPlease enable developer mode in Windows Settings.", "Developer mode not enabled!", MB_OK | MB_ICONERROR );
+		ThrowIfFailed( hr );
+	}
 
 	// Create command queue
 	{
