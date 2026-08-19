@@ -377,6 +377,9 @@ void Application::Tick()
 			mRenderer->mCameraYaw -= io.MouseDelta.x * 0.0025f;
 		}
 
+		if ( ImGui::IsKeyDown( ImGuiKey_LeftArrow ) ) mRenderer->mCameraYaw -= io.DeltaTime * 0.5f;
+		if ( ImGui::IsKeyDown( ImGuiKey_RightArrow ) ) mRenderer->mCameraYaw += io.DeltaTime * 0.5f;
+
 		mRenderer->mCameraPitch = std::clamp( mRenderer->mCameraPitch, -DirectX::XM_PIDIV2 * 0.99f, DirectX::XM_PIDIV2 * 0.99f );
 		mRenderer->mCameraYaw = std::fmod( mRenderer->mCameraYaw, DirectX::XM_2PI );
 
